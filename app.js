@@ -77,6 +77,10 @@
   const cameraSlots = Array.from(document.querySelectorAll(".camera-slot"));
   const cameraHelp = document.getElementById("cameraHelp");
   const cameraHelpText = document.getElementById("cameraHelpText");
+  const layoutCameraHint = document.getElementById("layoutCameraHint");
+  const accountFab = document.getElementById("accountFab");
+  const accountPanel = document.getElementById("accountPanel");
+  const accountPanelStatus = document.getElementById("accountPanelStatus");
 
   const startBtn = document.getElementById("startBtn");
   const layoutHomeBtn = document.getElementById("layoutHomeBtn");
@@ -118,6 +122,7 @@
   let currentSavedPhotoId = null;
   let libraryObjectUrls = [];
   let currentLayout = "classic";
+  let cameraPrimed = false;
 
   function setScreen(name) {
     screens.forEach((screen) => {
@@ -310,6 +315,7 @@
   function updateAuthUi() {
     if (currentUser) {
       authStatus.textContent = `${currentUser.displayName} 로그인 중`;
+      accountPanelStatus.textContent = `${currentUser.displayName} 로그인 중`;
       loginOpenBtn.classList.add("is-hidden");
       signupOpenBtn.classList.add("is-hidden");
       logoutBtn.classList.remove("is-hidden");
@@ -317,12 +323,24 @@
       librarySaveBtn.textContent = currentSavedPhotoId ? "보관함 저장됨" : "보관함 저장";
     } else {
       authStatus.textContent = "비회원 모드";
+      accountPanelStatus.textContent = "비회원도 촬영과 저장 가능";
       loginOpenBtn.classList.remove("is-hidden");
       signupOpenBtn.classList.remove("is-hidden");
       logoutBtn.classList.add("is-hidden");
       libraryOpenBtn.classList.add("is-hidden");
       librarySaveBtn.textContent = "로그인 후 보관함 저장";
     }
+  }
+
+  function closeAccountPanel() {
+    accountPanel.classList.add("is-hidden");
+    accountFab.setAttribute("aria-expanded", "false");
+  }
+
+  function toggleAccountPanel() {
+    const shouldOpen = accountPanel.classList.contains("is-hidden");
+    accountPanel.classList.toggle("is-hidden", !shouldOpen);
+    accountFab.setAttribute("aria-expanded", String(shouldOpen));
   }
 
   function openAuthModal(mode, afterAuth) {
@@ -676,6 +694,7 @@
 
     try {
       stream = await requestCameraStream();
+      cameraPrimed = true;
       video.srcObject = stream;
       await video.play();
       setFilter(currentFilter);
@@ -687,6 +706,34 @@
       const message = cameraErrorMessage(error);
       cameraMessage.textContent = message;
       showCameraHelp(message);
+      console.warn(error);
+    }
+  }
+
+  async function primeCameraPermission() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error("이 브라우저는 카메라 기능을 지원하지 않아요. Chrome, Edge, Safari에서 다시 열어주세요.");
+    }
+
+    if (cameraPrimed) return;
+
+    const testStream = await requestCameraStream();
+    testStream.getTracks().forEach((track) => track.stop());
+    cameraPrimed = true;
+  }
+
+  async function beginStartFlow() {
+    closeAccountPanel();
+    setScreen("layout");
+
+    if (!layoutCameraHint) return;
+
+    layoutCameraHint.textContent = "내장 카메라 권한을 확인 중이에요.";
+    try {
+      await primeCameraPermission();
+      layoutCameraHint.textContent = "카메라 준비 완료. 원하는 컷 구성을 고르면 바로 촬영 화면으로 이동해요.";
+    } catch (error) {
+      layoutCameraHint.textContent = cameraErrorMessage(error);
       console.warn(error);
     }
   }
@@ -1095,7 +1142,7 @@
     }
   }
 
-  startBtn.addEventListener("click", () => setScreen("layout"));
+  startBtn.addEventListener("click", beginStartFlow);
   layoutHomeBtn.addEventListener("click", goHome);
   layoutStartBtn.addEventListener("click", startCamera);
   shutterBtn.addEventListener("click", shootSequence);
@@ -1109,12 +1156,25 @@
   shareBtn.addEventListener("click", shareStrip);
   librarySaveBtn.addEventListener("click", saveCurrentPhotoToLibrary);
   saveLibraryOpenBtn.addEventListener("click", openLibrary);
-  libraryOpenBtn.addEventListener("click", openLibrary);
+  accountFab.addEventListener("click", toggleAccountPanel);
+  libraryOpenBtn.addEventListener("click", () => {
+    closeAccountPanel();
+    openLibrary();
+  });
   libraryHomeBtn.addEventListener("click", goHome);
   libraryShootBtn.addEventListener("click", startCamera);
-  loginOpenBtn.addEventListener("click", () => openAuthModal("login"));
-  signupOpenBtn.addEventListener("click", () => openAuthModal("signup"));
-  logoutBtn.addEventListener("click", logout);
+  loginOpenBtn.addEventListener("click", () => {
+    closeAccountPanel();
+    openAuthModal("login");
+  });
+  signupOpenBtn.addEventListener("click", () => {
+    closeAccountPanel();
+    openAuthModal("signup");
+  });
+  logoutBtn.addEventListener("click", () => {
+    closeAccountPanel();
+    logout();
+  });
   authCloseBtn.addEventListener("click", closeAuthModal);
   authLoginTab.addEventListener("click", () => openAuthModal("login", pendingAfterAuth));
   authSignupTab.addEventListener("click", () => openAuthModal("signup", pendingAfterAuth));
@@ -1123,6 +1183,16 @@
   authModal.addEventListener("click", (event) => {
     if (event.target === authModal) {
       closeAuthModal();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (
+      !accountPanel.classList.contains("is-hidden") &&
+      !accountPanel.contains(event.target) &&
+      !accountFab.contains(event.target)
+    ) {
+      closeAccountPanel();
     }
   });
 

@@ -3,30 +3,25 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="description" content="비회원으로 바로 찍고 저장하거나, 로그인 후 4컷 사진을 보관함에 저장할 수 있는 TODAY 4 CUT 포토부스입니다.">
+  <meta name="description" content="경희대 감성의 모바일 앱형 TODAY 4 CUT 포토부스입니다. 비회원 촬영과 저장, 로그인 보관함을 지원합니다.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="TODAY 4 CUT">
-  <meta property="og:description" content="모바일과 데스크톱에서 바로 촬영하고 저장하는 4컷 포토부스.">
-  <meta name="theme-color" content="#f6d6df">
+  <meta property="og:description" content="모바일과 데스크톱에서 바로 촬영하고 저장하는 경희대 감성 4컷 포토부스.">
+  <meta name="theme-color" content="#7b1234">
   <title>TODAY 4 CUT</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./styles.css?v=20260608-khu-app">
 </head>
 <body>
   <main id="app" aria-live="polite">
     <section class="screen screen-start is-active" data-screen="start" aria-labelledby="start-title">
       <div class="auth-bar">
+        <span class="campus-mark" aria-hidden="true">KHU</span>
         <div>
-          <strong>TODAY 4 CUT</strong>
+          <strong>KHU TODAY 4 CUT</strong>
           <span id="authStatus">비회원 모드</span>
-        </div>
-        <div class="auth-actions">
-          <button id="libraryOpenBtn" class="pill-button is-hidden" type="button">보관함</button>
-          <button id="loginOpenBtn" class="pill-button" type="button">로그인</button>
-          <button id="signupOpenBtn" class="pill-button strong" type="button">회원가입</button>
-          <button id="logoutBtn" class="pill-button is-hidden" type="button">로그아웃</button>
         </div>
       </div>
 
@@ -46,9 +41,9 @@
       </div>
 
       <div class="start-copy">
-        <p class="eyebrow">TODAY 4 CUT</p>
+        <p class="eyebrow">KYUNG HEE PHOTO BOOTH</p>
         <h1 id="start-title">TODAY 4 CUT</h1>
-        <p class="start-note">비회원은 바로 저장, 로그인하면 보관함에 자동 저장</p>
+        <p class="start-note">경희의 밤하늘 톤으로 만든 4컷 포토부스. 비회원은 바로 저장, 로그인하면 보관함에 남아요.</p>
       </div>
 
       <button id="startBtn" class="primary-button" type="button">
@@ -76,9 +71,10 @@
       </header>
 
       <div class="layout-copy">
-        <p class="eyebrow">PICK A FRAME</p>
+        <p class="eyebrow">KHU FRAME</p>
         <h1>어떻게 찍을까요?</h1>
         <p>선택한 배열 그대로 한 화면에 4칸이 보이고, 1번부터 차례대로 촬영돼요.</p>
+        <p id="layoutCameraHint" class="permission-hint" role="status"></p>
       </div>
 
       <div class="layout-options" role="radiogroup" aria-label="4컷 구성">
@@ -253,6 +249,23 @@
       </div>
       <div id="libraryGrid" class="library-grid" aria-live="polite"></div>
     </section>
+
+    <button id="accountFab" class="account-fab" type="button" aria-label="회원 메뉴 열기" aria-expanded="false">
+      <span aria-hidden="true">👤</span>
+    </button>
+
+    <div id="accountPanel" class="account-panel is-hidden" role="menu" aria-label="회원 메뉴">
+      <div class="account-panel-head">
+        <strong>MY BOOTH</strong>
+        <span id="accountPanelStatus">비회원 모드</span>
+      </div>
+      <div class="auth-actions">
+        <button id="libraryOpenBtn" class="pill-button is-hidden" type="button">보관함</button>
+        <button id="loginOpenBtn" class="pill-button" type="button">로그인</button>
+        <button id="signupOpenBtn" class="pill-button strong" type="button">회원가입</button>
+        <button id="logoutBtn" class="pill-button is-hidden" type="button">로그아웃</button>
+      </div>
+    </div>
   </main>
 
   <div id="authModal" class="modal-backdrop is-hidden" role="presentation">
@@ -290,6 +303,6 @@
   </div>
 
   <canvas id="workCanvas" width="720" height="960" hidden></canvas>
-  <script src="./app.js"></script>
+  <script src="./app.js?v=20260608-khu-app"></script>
 </body>
 </html>
