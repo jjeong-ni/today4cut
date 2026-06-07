@@ -1,20 +1,295 @@
 <!doctype html>
 <html lang="ko">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>today4cut</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <header>
-      <h1>today4cut</h1>
-      <p>간단한 GitHub Pages 데모 페이지입니다.</p>
-    </header>
-    <main>
-      <button id="action">클릭해보세요</button>
-      <div id="output"></div>
-    </main>
-    <script src="app.js"></script>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="비회원으로 바로 찍고 저장하거나, 로그인 후 4컷 사진을 보관함에 저장할 수 있는 TODAY 4 CUT 포토부스입니다.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="TODAY 4 CUT">
+  <meta property="og:description" content="모바일과 데스크톱에서 바로 촬영하고 저장하는 4컷 포토부스.">
+  <meta name="theme-color" content="#f6d6df">
+  <title>TODAY 4 CUT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main id="app" aria-live="polite">
+    <section class="screen screen-start is-active" data-screen="start" aria-labelledby="start-title">
+      <div class="auth-bar">
+        <div>
+          <strong>TODAY 4 CUT</strong>
+          <span id="authStatus">비회원 모드</span>
+        </div>
+        <div class="auth-actions">
+          <button id="libraryOpenBtn" class="pill-button is-hidden" type="button">보관함</button>
+          <button id="loginOpenBtn" class="pill-button" type="button">로그인</button>
+          <button id="signupOpenBtn" class="pill-button strong" type="button">회원가입</button>
+          <button id="logoutBtn" class="pill-button is-hidden" type="button">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="booth" aria-hidden="true">
+        <div class="marquee">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+        <div class="booth-window">
+          <div class="window-shine"></div>
+          <div class="strip-sample">
+            <i></i><i></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="coin-panel">
+          <span></span><span></span>
+        </div>
+      </div>
+
+      <div class="start-copy">
+        <p class="eyebrow">TODAY 4 CUT</p>
+        <h1 id="start-title">TODAY 4 CUT</h1>
+        <p class="start-note">비회원은 바로 저장, 로그인하면 보관함에 자동 저장</p>
+      </div>
+
+      <button id="startBtn" class="primary-button" type="button">
+        <span class="button-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M8.5 7.5 10 5h4l1.5 2.5H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2h3.5Z"></path>
+            <circle cx="12" cy="13" r="3.2"></circle>
+          </svg>
+        </span>
+        촬영 시작
+      </button>
+    </section>
+
+    <section class="screen screen-layout" data-screen="layout" aria-labelledby="layout-title">
+      <header class="topbar">
+        <button id="layoutHomeBtn" class="icon-button" type="button" aria-label="처음 화면으로">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M3.5 11 12 4l8.5 7"></path>
+            <path d="M5.5 10.5V20h13v-9.5"></path>
+            <path d="M9.5 20v-5h5v5"></path>
+          </svg>
+        </button>
+        <h2 id="layout-title">컷 구성 선택</h2>
+        <span class="topbar-spacer"></span>
+      </header>
+
+      <div class="layout-copy">
+        <p class="eyebrow">PICK A FRAME</p>
+        <h1>어떻게 찍을까요?</h1>
+        <p>선택한 배열 그대로 한 화면에 4칸이 보이고, 1번부터 차례대로 촬영돼요.</p>
+      </div>
+
+      <div class="layout-options" role="radiogroup" aria-label="4컷 구성">
+        <button class="layout-option is-selected" type="button" data-layout="classic" role="radio" aria-checked="true">
+          <span class="mini-frame mini-classic" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <strong>세로 4컷</strong>
+          <small>기본 포토부스</small>
+        </button>
+        <button class="layout-option" type="button" data-layout="grid" role="radio" aria-checked="false">
+          <span class="mini-frame mini-grid" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <strong>2 x 2</strong>
+          <small>귀엽게 꽉 찬 배열</small>
+        </button>
+        <button class="layout-option" type="button" data-layout="split" role="radio" aria-checked="false">
+          <span class="mini-frame mini-split" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <strong>큰컷 + 3컷</strong>
+          <small>첫 컷을 크게</small>
+        </button>
+      </div>
+
+      <button id="layoutStartBtn" class="primary-button" type="button">이 구성으로 촬영</button>
+    </section>
+
+    <section class="screen screen-camera" data-screen="camera" aria-labelledby="camera-title">
+      <header class="topbar">
+        <button id="cameraHomeBtn" class="icon-button" type="button" aria-label="처음 화면으로">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M3.5 11 12 4l8.5 7"></path>
+            <path d="M5.5 10.5V20h13v-9.5"></path>
+            <path d="M9.5 20v-5h5v5"></path>
+          </svg>
+        </button>
+        <h2 id="camera-title">TODAY 4 CUT</h2>
+        <div class="shot-count" id="shotCount">0/4</div>
+      </header>
+
+      <div class="camera-stage">
+        <div class="camera-grid layout-classic" id="cameraGrid" aria-label="4컷 촬영 프레임">
+          <div class="camera-slot is-active" data-slot="0"><span>1</span></div>
+          <div class="camera-slot" data-slot="1"><span>2</span></div>
+          <div class="camera-slot" data-slot="2"><span>3</span></div>
+          <div class="camera-slot" data-slot="3"><span>4</span></div>
+        </div>
+        <video id="video" autoplay playsinline muted></video>
+        <div class="countdown" id="countdown" aria-hidden="true"></div>
+        <div class="flash" id="flash" aria-hidden="true"></div>
+        <div class="camera-help is-hidden" id="cameraHelp">
+          <strong>카메라를 열 수 없어요</strong>
+          <span id="cameraHelpText">브라우저의 카메라 권한을 허용한 뒤 다시 시도해주세요.</span>
+          <button id="retryCameraBtn" class="secondary-button" type="button">권한 다시 요청</button>
+        </div>
+      </div>
+
+      <div class="filter-row" role="group" aria-label="필터 선택">
+        <button class="filter-button is-selected" type="button" data-filter="normal" aria-pressed="true">NORMAL</button>
+        <button class="filter-button" type="button" data-filter="bw" aria-pressed="false">B/W</button>
+        <button class="filter-button" type="button" data-filter="ccd" aria-pressed="false">CCD</button>
+        <button class="filter-button" type="button" data-filter="blurry" aria-pressed="false">SOFT</button>
+      </div>
+
+      <button id="shutterBtn" class="shutter-button" type="button" aria-label="4컷 촬영">
+        <span></span>
+      </button>
+      <p id="cameraMessage" class="message" role="status"></p>
+    </section>
+
+    <section class="screen screen-preview" data-screen="preview" aria-labelledby="preview-title">
+      <header class="topbar">
+        <button id="retakeIconBtn" class="icon-button" type="button" aria-label="다시 찍기">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M4 9a8 8 0 1 1 2.35 5.66"></path>
+            <path d="M4 4v5h5"></path>
+          </svg>
+        </button>
+        <h2 id="preview-title">미리보기</h2>
+        <span class="topbar-spacer"></span>
+      </header>
+
+      <div class="strip-stage">
+        <canvas id="previewCanvas" aria-label="촬영된 4컷 사진 미리보기"></canvas>
+      </div>
+
+      <div class="action-row">
+        <button id="retakeBtn" class="secondary-button" type="button">다시 찍기</button>
+        <button id="confirmBtn" class="primary-button compact" type="button" disabled>다음</button>
+      </div>
+    </section>
+
+    <section class="screen screen-print" data-screen="print" aria-labelledby="print-title">
+      <h2 id="print-title" class="print-title">PRINT</h2>
+      <div class="print-machine">
+        <div class="slot" aria-hidden="true"><span></span></div>
+        <div class="print-window">
+          <img id="printImage" alt="인화 중인 4컷 사진">
+        </div>
+      </div>
+      <button id="toSaveBtn" class="primary-button compact" type="button" disabled>완료</button>
+    </section>
+
+    <section class="screen screen-save" data-screen="save" aria-labelledby="save-title">
+      <header class="topbar">
+        <button id="saveHomeBtn" class="icon-button" type="button" aria-label="처음 화면으로">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M3.5 11 12 4l8.5 7"></path>
+            <path d="M5.5 10.5V20h13v-9.5"></path>
+            <path d="M9.5 20v-5h5v5"></path>
+          </svg>
+        </button>
+        <h2 id="save-title">저장</h2>
+        <button id="saveLibraryOpenBtn" class="icon-button" type="button" aria-label="보관함 열기">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M4 5h16v14H4z"></path>
+            <path d="M8 9h8"></path>
+            <path d="M8 13h5"></path>
+          </svg>
+        </button>
+      </header>
+
+      <div class="final-stage">
+        <img id="finalImage" alt="저장할 4컷 사진">
+      </div>
+
+      <div class="action-grid">
+        <button id="downloadBtn" class="primary-button compact" type="button">
+          <span class="button-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M12 3v11"></path>
+              <path d="m7 10 5 5 5-5"></path>
+              <path d="M5 20h14"></path>
+            </svg>
+          </span>
+          기기에 저장
+        </button>
+        <button id="shareBtn" class="secondary-button" type="button">
+          <span class="button-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <path d="m8.8 10.6 6.4-3.2"></path>
+              <path d="m8.8 13.4 6.4 3.2"></path>
+            </svg>
+          </span>
+          공유
+        </button>
+        <button id="librarySaveBtn" class="secondary-button full-row" type="button">보관함 저장</button>
+      </div>
+      <p id="saveMessage" class="message" role="status"></p>
+    </section>
+
+    <section class="screen screen-library" data-screen="library" aria-labelledby="library-title">
+      <header class="topbar">
+        <button id="libraryHomeBtn" class="icon-button" type="button" aria-label="처음 화면으로">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M3.5 11 12 4l8.5 7"></path>
+            <path d="M5.5 10.5V20h13v-9.5"></path>
+            <path d="M9.5 20v-5h5v5"></path>
+          </svg>
+        </button>
+        <h2 id="library-title">보관함</h2>
+        <button id="libraryShootBtn" class="icon-button" type="button" aria-label="새로 촬영하기">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M8.5 7.5 10 5h4l1.5 2.5H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9.5a2 2 0 0 1 2-2h3.5Z"></path>
+            <circle cx="12" cy="13" r="3.2"></circle>
+          </svg>
+        </button>
+      </header>
+      <p id="libraryStatus" class="library-status"></p>
+      <div id="libraryEmpty" class="empty-state">
+        <strong>아직 저장된 사진이 없어요.</strong>
+        <span>로그인 상태로 촬영하면 완성된 4컷이 이곳에 보관됩니다.</span>
+      </div>
+      <div id="libraryGrid" class="library-grid" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <div id="authModal" class="modal-backdrop is-hidden" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+      <button id="authCloseBtn" class="icon-button modal-close" type="button" aria-label="창 닫기">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M6 6l12 12"></path>
+          <path d="M18 6 6 18"></path>
+        </svg>
+      </button>
+      <p class="eyebrow">MEMBER</p>
+      <h2 id="authTitle">로그인</h2>
+      <div class="auth-tabs" role="group" aria-label="회원 메뉴">
+        <button id="authLoginTab" class="auth-tab is-selected" type="button">로그인</button>
+        <button id="authSignupTab" class="auth-tab" type="button">회원가입</button>
+      </div>
+      <form id="authForm" class="auth-form">
+        <label>
+          아이디
+          <input id="authUserId" name="userId" autocomplete="username" minlength="3" maxlength="20" required>
+        </label>
+        <label id="displayNameField" class="is-hidden">
+          닉네임
+          <input id="authDisplayName" name="displayName" maxlength="16" autocomplete="nickname">
+        </label>
+        <label>
+          비밀번호
+          <input id="authPassword" name="password" type="password" autocomplete="current-password" minlength="4" required>
+        </label>
+        <button id="authSubmitBtn" class="primary-button" type="submit">로그인</button>
+      </form>
+      <p id="authMessage" class="message auth-message" role="status"></p>
+      <p class="auth-note">계정과 보관함은 서버가 아니라 이 브라우저에 저장됩니다.</p>
+    </div>
+  </div>
+
+  <canvas id="workCanvas" width="720" height="960" hidden></canvas>
+  <script src="./app.js"></script>
+</body>
 </html>
