@@ -68,61 +68,62 @@
     kyungheeKuong1: {
       label: "경희X쿠옹 1",
       type: "image",
+      frameOnly: true,
       width: 768,
-      height: 1377,
+      height: 1376,
       src: "./assets/theme-kyunghee-kuong-1.png",
       background: "#a80d18",
-      photoArea: { x: 58, y: 704, w: 652, h: 492 },
-      slots: [
-        { x: 58, y: 187, w: 345, h: 490 },
-        { x: 397, y: 187, w: 313, h: 234 },
-        { x: 397, y: 444, w: 313, h: 235 },
-        { x: 58, y: 704, w: 318, h: 233 },
-        { x: 397, y: 704, w: 313, h: 233 },
-        { x: 58, y: 961, w: 318, h: 235 },
-        { x: 397, y: 961, w: 313, h: 235 }
-      ],
+      photoArea: { x: 96, y: 96, w: 576, h: 1152 },
+      slots: [],
       customRects: {
         classic: [
-          { x: 58, y: 704, w: 318, h: 233, r: 22 },
-          { x: 397, y: 704, w: 313, h: 233, r: 22 },
-          { x: 58, y: 961, w: 318, h: 235, r: 22 },
-          { x: 397, y: 961, w: 313, h: 235, r: 22 }
+          { x: 96, y: 96, w: 576, h: 258, r: 18 },
+          { x: 96, y: 374, w: 576, h: 258, r: 18 },
+          { x: 96, y: 652, w: 576, h: 258, r: 18 },
+          { x: 96, y: 930, w: 576, h: 258, r: 18 }
         ],
         grid: [
-          { x: 58, y: 704, w: 318, h: 233, r: 22 },
-          { x: 397, y: 704, w: 313, h: 233, r: 22 },
-          { x: 58, y: 961, w: 318, h: 235, r: 22 },
-          { x: 397, y: 961, w: 313, h: 235, r: 22 }
+          { x: 96, y: 200, w: 270, h: 388, r: 18 },
+          { x: 402, y: 200, w: 270, h: 388, r: 18 },
+          { x: 96, y: 608, w: 270, h: 388, r: 18 },
+          { x: 402, y: 608, w: 270, h: 388, r: 18 }
         ],
         split: [
-          { x: 58, y: 187, w: 345, h: 490, r: 24 },
-          { x: 397, y: 187, w: 313, h: 234, r: 22 },
-          { x: 397, y: 444, w: 313, h: 235, r: 22 },
-          { x: 397, y: 704, w: 313, h: 233, r: 22 }
+          { x: 96, y: 96, w: 340, h: 1092, r: 18 },
+          { x: 456, y: 96, w: 216, h: 340, r: 16 },
+          { x: 456, y: 456, w: 216, h: 340, r: 16 },
+          { x: 456, y: 816, w: 216, h: 340, r: 16 }
         ]
       }
     },
     kuong2: {
       label: "쿠옹이 2",
       type: "image",
+      frameOnly: true,
       width: 768,
       height: 1376,
       src: "./assets/theme-kuong-2.png",
       background: "#f8b7cc",
-      photoArea: { x: 57, y: 188, w: 653, h: 1006 },
-      slots: [
-        { x: 57, y: 188, w: 653, h: 229 },
-        { x: 57, y: 444, w: 653, h: 233 },
-        { x: 57, y: 703, w: 653, h: 233 },
-        { x: 57, y: 960, w: 653, h: 234 }
-      ],
+      photoArea: { x: 96, y: 200, w: 576, h: 1000 },
+      slots: [],
       customRects: {
         classic: [
-          { x: 57, y: 188, w: 653, h: 229, r: 22 },
-          { x: 57, y: 444, w: 653, h: 233, r: 22 },
-          { x: 57, y: 703, w: 653, h: 233, r: 22 },
-          { x: 57, y: 960, w: 653, h: 234, r: 22 }
+          { x: 96, y: 200, w: 576, h: 218, r: 18 },
+          { x: 96, y: 438, w: 576, h: 218, r: 18 },
+          { x: 96, y: 676, w: 576, h: 218, r: 18 },
+          { x: 96, y: 914, w: 576, h: 218, r: 18 }
+        ],
+        grid: [
+          { x: 96, y: 200, w: 270, h: 320, r: 18 },
+          { x: 402, y: 200, w: 270, h: 320, r: 18 },
+          { x: 96, y: 540, w: 270, h: 320, r: 18 },
+          { x: 402, y: 540, w: 270, h: 320, r: 18 }
+        ],
+        split: [
+          { x: 96, y: 200, w: 340, h: 932, r: 18 },
+          { x: 456, y: 200, w: 216, h: 290, r: 16 },
+          { x: 456, y: 510, w: 216, h: 290, r: 16 },
+          { x: 456, y: 820, w: 216, h: 290, r: 16 }
         ]
       }
     }
@@ -1407,12 +1408,10 @@
       drawPhotoInRect(previewCtx, shot, rect, theme);
     });
 
-    if (currentLayout === "classic") {
-      // Classic: slot mask aligns with photo positions → draw overlay directly to preserve edge characters
-      previewCtx.drawImage(canvases.overlay, 0, 0, layout.width, layout.height);
-    } else {
-      // Grid/Split: slot mask doesn't align with photo positions → clear actual photo rects from overlay
+    if (theme.frameOnly || currentLayout !== "classic") {
       drawOverlayOutsideRects(previewCtx, canvases.overlay, layout.rects, layout.width, layout.height);
+    } else {
+      previewCtx.drawImage(canvases.overlay, 0, 0, layout.width, layout.height);
     }
   }
 
