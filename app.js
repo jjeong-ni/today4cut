@@ -1374,7 +1374,7 @@
       drawPhotoInRect(previewCtx, shot, rect, theme);
     });
 
-    drawOverlayOutsideRects(previewCtx, canvases.overlay, layout.rects, layout.width, layout.height);
+    previewCtx.drawImage(canvases.overlay, 0, 0, layout.width, layout.height);
   }
 
   function drawStrip() {
