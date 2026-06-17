@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260608-khu-app">
+  <link rel="stylesheet" href="./styles.css?v=20260610-theme-flow">
 </head>
 <body>
   <main id="app" aria-live="polite">
@@ -95,7 +95,56 @@
         </button>
       </div>
 
-      <button id="layoutStartBtn" class="primary-button" type="button">이 구성으로 촬영</button>
+      <button id="layoutStartBtn" class="primary-button" type="button">테마 고르기</button>
+    </section>
+
+    <section class="screen screen-theme" data-screen="theme" aria-labelledby="theme-title">
+      <header class="topbar">
+        <button id="themeBackBtn" class="icon-button" type="button" aria-label="컷 구성으로 돌아가기">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M15 18 9 12l6-6"></path>
+          </svg>
+        </button>
+        <h2 id="theme-title">테마 선택</h2>
+        <button id="themeHomeBtn" class="icon-button" type="button" aria-label="처음 화면으로">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M3.5 11 12 4l8.5 7"></path>
+            <path d="M5.5 10.5V20h13v-9.5"></path>
+            <path d="M9.5 20v-5h5v5"></path>
+          </svg>
+        </button>
+      </header>
+
+      <div class="layout-copy theme-copy">
+        <p class="eyebrow">KHU THEME</p>
+        <h1>배경 테마를 고르세요</h1>
+        <p>선택한 컷 구성에 맞춰 사진이 들어가요.</p>
+      </div>
+
+      <div class="theme-options theme-options-large" role="radiogroup" aria-label="사진 테마">
+        <button class="theme-option is-selected" type="button" data-theme="black" role="radio" aria-checked="true">
+          <span class="theme-preview theme-preview-black" aria-hidden="true"></span>
+          <strong>Black</strong>
+          <small>Classic frame</small>
+        </button>
+        <button class="theme-option" type="button" data-theme="white" role="radio" aria-checked="false">
+          <span class="theme-preview theme-preview-white" aria-hidden="true"></span>
+          <strong>White</strong>
+          <small>Clean frame</small>
+        </button>
+        <button class="theme-option" type="button" data-theme="kyungheeKuong1" role="radio" aria-checked="false">
+          <span class="theme-preview theme-preview-kyunghee-kuong" aria-hidden="true"></span>
+          <strong>경희X쿠옹 1</strong>
+          <small>Red campus</small>
+        </button>
+        <button class="theme-option" type="button" data-theme="kuong2" role="radio" aria-checked="false">
+          <span class="theme-preview theme-preview-kuong-2" aria-hidden="true"></span>
+          <strong>쿠옹이 2</strong>
+          <small>Pink memory</small>
+        </button>
+      </div>
+
+      <button id="themeStartBtn" class="primary-button" type="button">촬영 시작</button>
     </section>
 
     <section class="screen screen-camera" data-screen="camera" aria-labelledby="camera-title">
@@ -303,6 +352,6 @@
   </div>
 
   <canvas id="workCanvas" width="720" height="960" hidden></canvas>
-  <script src="./app.js?v=20260608-khu-app"></script>
+  <script src="./app.js?v=20260610-theme-flow"></script>
 </body>
 </html>

@@ -48,12 +48,72 @@
     }
   };
 
+  const themePresets = {
+    black: {
+      label: "Black",
+      type: "solid",
+      outer: "#09090b",
+      middle: "#fff7fb",
+      inner: "#111113",
+      stroke: "rgba(255, 255, 255, 0.34)"
+    },
+    white: {
+      label: "White",
+      type: "solid",
+      outer: "#fffdf8",
+      middle: "#111113",
+      inner: "#fffaf0",
+      stroke: "rgba(17, 17, 19, 0.18)"
+    },
+    kyungheeKuong1: {
+      label: "경희X쿠옹 1",
+      type: "image",
+      width: 768,
+      height: 1377,
+      src: "./assets/theme-kyunghee-kuong-1.png",
+      background: "#a80d18",
+      photoArea: { x: 58, y: 238, w: 652, h: 930 },
+      slots: [
+        { x: 58, y: 187, w: 345, h: 490 },
+        { x: 397, y: 187, w: 313, h: 234 },
+        { x: 397, y: 444, w: 313, h: 235 },
+        { x: 58, y: 704, w: 318, h: 233 },
+        { x: 397, y: 704, w: 313, h: 233 },
+        { x: 58, y: 961, w: 318, h: 235 },
+        { x: 397, y: 961, w: 313, h: 235 }
+      ]
+    },
+    kuong2: {
+      label: "쿠옹이 2",
+      type: "image",
+      width: 768,
+      height: 1376,
+      src: "./assets/theme-kuong-2.png",
+      background: "#f8b7cc",
+      photoArea: { x: 58, y: 188, w: 652, h: 1004 },
+      slots: [
+        { x: 57, y: 188, w: 653, h: 229 },
+        { x: 57, y: 444, w: 653, h: 233 },
+        { x: 57, y: 703, w: 653, h: 233 },
+        { x: 57, y: 960, w: 653, h: 234 }
+      ]
+    }
+  };
+
   const screens = Array.from(document.querySelectorAll("[data-screen]"));
   const video = document.getElementById("video");
   const workCanvas = document.getElementById("workCanvas");
   const workCtx = workCanvas.getContext("2d", { willReadFrequently: true });
   const previewCanvas = document.getElementById("previewCanvas");
   const previewCtx = previewCanvas.getContext("2d");
+  const imageThemeImages = {};
+  Object.entries(themePresets).forEach(([name, theme]) => {
+    if (!theme.src) return;
+    const image = new Image();
+    image.decoding = "async";
+    image.src = theme.src;
+    imageThemeImages[name] = image;
+  });
   const countdownEl = document.getElementById("countdown");
   const flashEl = document.getElementById("flash");
   const shotCountEl = document.getElementById("shotCount");
@@ -85,6 +145,9 @@
   const startBtn = document.getElementById("startBtn");
   const layoutHomeBtn = document.getElementById("layoutHomeBtn");
   const layoutStartBtn = document.getElementById("layoutStartBtn");
+  const themeHomeBtn = document.getElementById("themeHomeBtn");
+  const themeBackBtn = document.getElementById("themeBackBtn");
+  const themeStartBtn = document.getElementById("themeStartBtn");
   const shutterBtn = document.getElementById("shutterBtn");
   const cameraHomeBtn = document.getElementById("cameraHomeBtn");
   const retakeBtn = document.getElementById("retakeBtn");
@@ -108,6 +171,7 @@
   const authSubmitBtn = document.getElementById("authSubmitBtn");
   const filterButtons = Array.from(document.querySelectorAll(".filter-button"));
   const layoutButtons = Array.from(document.querySelectorAll(".layout-option"));
+  const themeButtons = Array.from(document.querySelectorAll(".theme-option"));
   const retryCameraBtn = document.getElementById("retryCameraBtn");
 
   let stream = null;
@@ -122,7 +186,11 @@
   let currentSavedPhotoId = null;
   let libraryObjectUrls = [];
   let currentLayout = "classic";
+  let currentTheme = "black";
   let cameraPrimed = false;
+  const imageThemeLoadPromises = {};
+  const imageThemeCanvases = {};
+  const imageThemeFailed = {};
 
   function setScreen(name) {
     screens.forEach((screen) => {
@@ -165,6 +233,17 @@
     cameraGrid.className = `camera-grid ${preset.className}`;
     layoutButtons.forEach((button) => {
       const isSelected = button.dataset.layout === currentLayout;
+      button.classList.toggle("is-selected", isSelected);
+      button.setAttribute("aria-checked", String(isSelected));
+    });
+
+  }
+
+  function setTheme(themeName) {
+    currentTheme = themePresets[themeName] ? themeName : "black";
+
+    themeButtons.forEach((button) => {
+      const isSelected = button.dataset.theme === currentTheme;
       button.classList.toggle("is-selected", isSelected);
       button.setAttribute("aria-checked", String(isSelected));
     });
@@ -471,6 +550,7 @@
       userId: currentUser.id,
       createdAt: new Date().toISOString(),
       filter: currentFilter,
+      theme: currentTheme,
       blob: stripBlob
     };
 
@@ -571,9 +651,10 @@
 
       const card = document.createElement("article");
       card.className = "photo-card";
+      const themeLabel = themePresets[photo.theme]?.label || themePresets.black.label;
       card.innerHTML = `
         <img src="${url}" alt="보관함에 저장된 4컷 사진">
-        <time datetime="${photo.createdAt}">${formatDate(photo.createdAt)} · ${photo.filter.toUpperCase()}</time>
+        <time datetime="${photo.createdAt}">${formatDate(photo.createdAt)} · ${photo.filter.toUpperCase()} · ${themeLabel}</time>
         <div class="card-actions">
           <button class="small-button" type="button" data-download="${photo.id}">저장</button>
           <button class="small-button danger" type="button" data-delete="${photo.id}">삭제</button>
@@ -955,6 +1036,21 @@
     };
   }
 
+  function roundedRect(ctx, x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + width - r, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+    ctx.lineTo(x + width, y + height - r);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    ctx.lineTo(x + r, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+  }
+
   function drawImageCover(ctx, image, x, y, width, height) {
     const sourceRatio = image.width / image.height;
     const targetRatio = width / height;
@@ -974,35 +1070,321 @@
     ctx.drawImage(image, sx, sy, sw, sh, x, y, width, height);
   }
 
-  function drawStrip() {
+  function drawImageContain(ctx, image, x, y, width, height) {
+    const scale = Math.min(width / image.width, height / image.height);
+    const drawW = image.width * scale;
+    const drawH = image.height * scale;
+    const drawX = x + (width - drawW) / 2;
+    const drawY = y + (height - drawH) / 2;
+
+    ctx.drawImage(image, drawX, drawY, drawW, drawH);
+  }
+
+  function drawImageSmartFit(ctx, image, x, y, width, height) {
+    const sourceRatio = image.width / image.height;
+    const targetRatio = width / height;
+    const ratioGap = Math.abs(Math.log(targetRatio / sourceRatio));
+
+    if (ratioGap < 0.45) {
+      drawImageCover(ctx, image, x, y, width, height);
+      return;
+    }
+
+    ctx.save();
+    ctx.globalAlpha = 0.62;
+    ctx.filter = "blur(18px) saturate(1.05)";
+    drawImageCover(ctx, image, x - 18, y - 18, width + 36, height + 36);
+    ctx.restore();
+
+    drawImageContain(ctx, image, x, y, width, height);
+  }
+
+  function hexToRgb(hex) {
+    const clean = hex.replace("#", "");
+    return {
+      r: parseInt(clean.slice(0, 2), 16),
+      g: parseInt(clean.slice(2, 4), 16),
+      b: parseInt(clean.slice(4, 6), 16)
+    };
+  }
+
+  function getImageThemeLayout(theme) {
+    const area = theme.photoArea;
+
+    if (currentLayout === "grid") {
+      const gap = 20;
+      const w = Math.round((area.w - gap) / 2);
+      const h = Math.round((area.h - gap) / 2);
+      return {
+        width: theme.width,
+        height: theme.height,
+        rects: [
+          { x: area.x, y: area.y, w, h, r: 22 },
+          { x: area.x + w + gap, y: area.y, w, h, r: 22 },
+          { x: area.x, y: area.y + h + gap, w, h, r: 22 },
+          { x: area.x + w + gap, y: area.y + h + gap, w, h, r: 22 }
+        ]
+      };
+    }
+
+    if (currentLayout === "split") {
+      const gap = 18;
+      const smallW = Math.round(area.w * 0.38);
+      const bigW = area.w - smallW - gap;
+      const smallH = Math.round((area.h - gap * 2) / 3);
+      return {
+        width: theme.width,
+        height: theme.height,
+        rects: [
+          { x: area.x, y: area.y, w: bigW, h: area.h, r: 24 },
+          { x: area.x + bigW + gap, y: area.y, w: smallW, h: smallH, r: 22 },
+          { x: area.x + bigW + gap, y: area.y + smallH + gap, w: smallW, h: smallH, r: 22 },
+          { x: area.x + bigW + gap, y: area.y + (smallH + gap) * 2, w: smallW, h: smallH, r: 22 }
+        ]
+      };
+    }
+
+    const gap = 24;
+    const h = Math.round((area.h - gap * 3) / 4);
+    return {
+      width: theme.width,
+      height: theme.height,
+      rects: Array.from({ length: SHOT_TOTAL }, (_, index) => ({
+        x: area.x,
+        y: area.y + index * (h + gap),
+        w: area.w,
+        h,
+        r: 24
+      }))
+    };
+  }
+
+  function collectThemeSlotMask(theme, imageData) {
+    const { data, width, height } = imageData;
+    const mask = new Uint8Array(width * height);
+    const visited = new Uint8Array(width * height);
+    const isSlotWhite = (index) => {
+      const offset = index * 4;
+      const r = data[offset];
+      const g = data[offset + 1];
+      const b = data[offset + 2];
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      return max > 244 && max - min < 14;
+    };
+
+    theme.slots.forEach((slot) => {
+      const x0 = Math.max(0, Math.floor(slot.x));
+      const y0 = Math.max(0, Math.floor(slot.y));
+      const x1 = Math.min(width - 1, Math.ceil(slot.x + slot.w));
+      const y1 = Math.min(height - 1, Math.ceil(slot.y + slot.h));
+      const startX = Math.min(width - 1, Math.max(0, Math.floor(slot.x + slot.w / 2)));
+      const startY = Math.min(height - 1, Math.max(0, Math.floor(slot.y + slot.h / 2)));
+      const stack = [startY * width + startX];
+
+      while (stack.length > 0) {
+        const index = stack.pop();
+        if (visited[index]) continue;
+        visited[index] = 1;
+
+        const x = index % width;
+        const y = Math.floor(index / width);
+        if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+        if (!isSlotWhite(index)) continue;
+
+        mask[index] = 1;
+
+        if (x > x0) stack.push(index - 1);
+        if (x < x1) stack.push(index + 1);
+        if (y > y0) stack.push(index - width);
+        if (y < y1) stack.push(index + width);
+      }
+    });
+
+    return mask;
+  }
+
+  function buildImageThemeCanvases(themeName) {
+    if (imageThemeCanvases[themeName]) return imageThemeCanvases[themeName];
+
+    const theme = themePresets[themeName];
+    const image = imageThemeImages[themeName];
+    if (!theme || !image || !image.naturalWidth) return null;
+
+    const width = theme.width || image.naturalWidth;
+    const height = theme.height || image.naturalHeight;
+    const base = document.createElement("canvas");
+    const overlay = document.createElement("canvas");
+    base.width = overlay.width = width;
+    base.height = overlay.height = height;
+
+    const baseCtx = base.getContext("2d", { willReadFrequently: true });
+    const overlayCtx = overlay.getContext("2d", { willReadFrequently: true });
+    baseCtx.drawImage(image, 0, 0, width, height);
+    overlayCtx.drawImage(image, 0, 0, width, height);
+
+    const baseData = baseCtx.getImageData(0, 0, width, height);
+    const overlayData = overlayCtx.getImageData(0, 0, width, height);
+    const slotMask = collectThemeSlotMask(theme, baseData);
+    const fill = hexToRgb(theme.background);
+
+    for (let index = 0; index < slotMask.length; index += 1) {
+      if (!slotMask[index]) continue;
+      const offset = index * 4;
+      baseData.data[offset] = fill.r;
+      baseData.data[offset + 1] = fill.g;
+      baseData.data[offset + 2] = fill.b;
+      baseData.data[offset + 3] = 255;
+      overlayData.data[offset + 3] = 0;
+    }
+
+    baseCtx.putImageData(baseData, 0, 0);
+    overlayCtx.putImageData(overlayData, 0, 0);
+    imageThemeCanvases[themeName] = { base, overlay };
+    return imageThemeCanvases[themeName];
+  }
+
+  function ensureImageThemeReady() {
+    const themeName = currentTheme;
+    const theme = themePresets[themeName];
+    if (!theme || theme.type !== "image" || imageThemeFailed[themeName]) return Promise.resolve();
+
+    const image = imageThemeImages[themeName];
+    if (!image) return Promise.resolve();
+
+    if (image.complete && image.naturalWidth) {
+      buildImageThemeCanvases(themeName);
+      return Promise.resolve();
+    }
+
+    if (image.complete && !image.naturalWidth) {
+      imageThemeFailed[themeName] = true;
+      return Promise.resolve();
+    }
+
+    if (!imageThemeLoadPromises[themeName]) {
+      imageThemeLoadPromises[themeName] = new Promise((resolve) => {
+        image.addEventListener("load", () => {
+          buildImageThemeCanvases(themeName);
+          resolve();
+        }, { once: true });
+        image.addEventListener("error", () => {
+          imageThemeFailed[themeName] = true;
+          resolve();
+        }, { once: true });
+      });
+    }
+
+    return imageThemeLoadPromises[themeName];
+  }
+
+  function drawPhotoInRect(ctx, shot, rect, theme) {
+    const inset = theme.type === "image" ? 7 : 0;
+    const x = rect.x + inset;
+    const y = rect.y + inset;
+    const w = rect.w - inset * 2;
+    const h = rect.h - inset * 2;
+    const r = Math.max(0, (rect.r || 0) - inset);
+
+    if (theme.type === "image") {
+      ctx.save();
+      ctx.shadowColor = "rgba(17, 17, 19, 0.28)";
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 8;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
+      roundedRect(ctx, rect.x, rect.y, rect.w, rect.h, rect.r || 22);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.save();
+    if (r > 0) {
+      roundedRect(ctx, x, y, w, h, r);
+      ctx.clip();
+    }
+    drawImageSmartFit(ctx, shot, x, y, w, h);
+    if (currentFilter === "normal" || currentFilter === "bw") {
+      drawVignette(ctx, x, y, w, h);
+    }
+    ctx.restore();
+
+    if (theme.type === "image") {
+      ctx.save();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.72)";
+      roundedRect(ctx, x, y, w, h, r);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function drawOverlayOutsideRects(ctx, overlay, rects, width, height) {
+    const visibleOverlay = document.createElement("canvas");
+    visibleOverlay.width = width;
+    visibleOverlay.height = height;
+    const overlayCtx = visibleOverlay.getContext("2d");
+    overlayCtx.drawImage(overlay, 0, 0, width, height);
+
+    rects.forEach((rect) => {
+      overlayCtx.clearRect(rect.x - 2, rect.y - 2, rect.w + 4, rect.h + 4);
+    });
+
+    ctx.drawImage(visibleOverlay, 0, 0, width, height);
+  }
+
+  function drawSolidStrip() {
     const layout = getOutputLayout();
+    const theme = themePresets[currentTheme]?.type === "solid" ? themePresets[currentTheme] : themePresets.black;
 
     previewCanvas.width = layout.width;
     previewCanvas.height = layout.height;
-    previewCtx.fillStyle = "#111113";
+    previewCtx.fillStyle = theme.outer;
     previewCtx.fillRect(0, 0, layout.width, layout.height);
-    previewCtx.fillStyle = "#fff7fb";
+    previewCtx.fillStyle = theme.middle;
     previewCtx.fillRect(BORDER, BORDER, layout.width - BORDER * 2, layout.height - BORDER * 2);
-    previewCtx.fillStyle = "#111113";
+    previewCtx.fillStyle = theme.inner;
     previewCtx.fillRect(BORDER + PAD / 2, BORDER + PAD / 2, layout.width - BORDER * 2 - PAD, layout.height - BORDER * 2 - PAD);
 
     shots.forEach((shot, index) => {
       const rect = layout.rects[index];
       if (!rect) return;
 
-      drawImageCover(previewCtx, shot, rect.x, rect.y, rect.w, rect.h);
-
-      previewCtx.save();
-      previewCtx.globalCompositeOperation = "screen";
-      previewCtx.globalAlpha = 0.18;
-      previewCtx.filter = "blur(10px)";
-      drawImageCover(previewCtx, shot, rect.x, rect.y, rect.w, rect.h);
-      previewCtx.restore();
-
-      if (currentFilter === "normal" || currentFilter === "bw") {
-        drawVignette(previewCtx, rect.x, rect.y, rect.w, rect.h);
-      }
+      drawPhotoInRect(previewCtx, shot, rect, theme);
     });
+  }
+
+  function drawImageThemeStrip() {
+    const theme = themePresets[currentTheme];
+    const canvases = buildImageThemeCanvases(currentTheme);
+
+    if (!theme || !canvases || imageThemeFailed[currentTheme]) {
+      drawSolidStrip();
+      return;
+    }
+
+    const layout = getImageThemeLayout(theme);
+    previewCanvas.width = layout.width;
+    previewCanvas.height = layout.height;
+    previewCtx.clearRect(0, 0, layout.width, layout.height);
+    previewCtx.drawImage(canvases.base, 0, 0, layout.width, layout.height);
+
+    shots.forEach((shot, index) => {
+      const rect = layout.rects[index];
+      if (!rect) return;
+      drawPhotoInRect(previewCtx, shot, rect, theme);
+    });
+
+    drawOverlayOutsideRects(previewCtx, canvases.overlay, layout.rects, layout.width, layout.height);
+  }
+
+  function drawStrip() {
+    const theme = themePresets[currentTheme];
+    if (theme?.type === "image") {
+      drawImageThemeStrip();
+      return;
+    }
+
+    drawSolidStrip();
   }
 
   function canvasToBlob(canvas, type, quality) {
@@ -1012,6 +1394,7 @@
   }
 
   async function buildStrip() {
+    await ensureImageThemeReady();
     drawStrip();
     stripBlob = await canvasToBlob(previewCanvas, "image/png");
     revokeStripUrl();
@@ -1144,7 +1527,10 @@
 
   startBtn.addEventListener("click", beginStartFlow);
   layoutHomeBtn.addEventListener("click", goHome);
-  layoutStartBtn.addEventListener("click", startCamera);
+  layoutStartBtn.addEventListener("click", () => setScreen("theme"));
+  themeHomeBtn.addEventListener("click", goHome);
+  themeBackBtn.addEventListener("click", () => setScreen("layout"));
+  themeStartBtn.addEventListener("click", startCamera);
   shutterBtn.addEventListener("click", shootSequence);
   cameraHomeBtn.addEventListener("click", goHome);
   retakeBtn.addEventListener("click", startCamera);
@@ -1221,6 +1607,10 @@
     button.addEventListener("click", () => setLayout(button.dataset.layout));
   });
 
+  themeButtons.forEach((button) => {
+    button.addEventListener("click", () => setTheme(button.dataset.theme));
+  });
+
   retryCameraBtn.addEventListener("click", startCamera);
 
   window.addEventListener("pagehide", stopCamera);
@@ -1234,4 +1624,5 @@
   updateAuthUi();
   setFilter(currentFilter);
   setLayout(currentLayout);
+  setTheme(currentTheme);
 })();
