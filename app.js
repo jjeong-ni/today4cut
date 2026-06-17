@@ -77,22 +77,22 @@
       slots: [],
       customRects: {
         classic: [
-          { x: 96, y: 96, w: 576, h: 258, r: 18 },
-          { x: 96, y: 374, w: 576, h: 258, r: 18 },
-          { x: 96, y: 652, w: 576, h: 258, r: 18 },
-          { x: 96, y: 930, w: 576, h: 258, r: 18 }
+          { x: 102, y: 118, w: 564, h: 266, r: 16 },
+          { x: 102, y: 404, w: 564, h: 266, r: 16 },
+          { x: 102, y: 690, w: 564, h: 266, r: 16 },
+          { x: 102, y: 976, w: 564, h: 266, r: 16 }
         ],
         grid: [
-          { x: 96, y: 200, w: 270, h: 388, r: 18 },
-          { x: 402, y: 200, w: 270, h: 388, r: 18 },
-          { x: 96, y: 608, w: 270, h: 388, r: 18 },
-          { x: 402, y: 608, w: 270, h: 388, r: 18 }
+          { x: 102, y: 118, w: 272, h: 560, r: 16 },
+          { x: 394, y: 118, w: 272, h: 560, r: 16 },
+          { x: 102, y: 694, w: 272, h: 560, r: 16 },
+          { x: 394, y: 694, w: 272, h: 560, r: 16 }
         ],
         split: [
-          { x: 96, y: 96, w: 340, h: 1092, r: 18 },
-          { x: 456, y: 96, w: 216, h: 340, r: 16 },
-          { x: 456, y: 456, w: 216, h: 340, r: 16 },
-          { x: 456, y: 816, w: 216, h: 340, r: 16 }
+          { x: 102, y: 118, w: 262, h: 1124, r: 16 },
+          { x: 380, y: 118, w: 286, h: 354, r: 16 },
+          { x: 380, y: 488, w: 286, h: 354, r: 16 },
+          { x: 380, y: 858, w: 286, h: 384, r: 16 }
         ]
       }
     },
@@ -104,26 +104,26 @@
       height: 1376,
       src: "./assets/theme-kuong-2.png",
       background: "#f8b7cc",
-      photoArea: { x: 96, y: 200, w: 576, h: 1000 },
+      photoArea: { x: 88, y: 236, w: 592, h: 992 },
       slots: [],
       customRects: {
         classic: [
-          { x: 96, y: 200, w: 576, h: 218, r: 18 },
-          { x: 96, y: 438, w: 576, h: 218, r: 18 },
-          { x: 96, y: 676, w: 576, h: 218, r: 18 },
-          { x: 96, y: 914, w: 576, h: 218, r: 18 }
+          { x: 88, y: 236, w: 592, h: 228, r: 16 },
+          { x: 88, y: 484, w: 592, h: 228, r: 16 },
+          { x: 88, y: 732, w: 592, h: 228, r: 16 },
+          { x: 88, y: 980, w: 592, h: 228, r: 16 }
         ],
         grid: [
-          { x: 96, y: 200, w: 270, h: 320, r: 18 },
-          { x: 402, y: 200, w: 270, h: 320, r: 18 },
-          { x: 96, y: 540, w: 270, h: 320, r: 18 },
-          { x: 402, y: 540, w: 270, h: 320, r: 18 }
+          { x: 88, y: 236, w: 284, h: 476, r: 16 },
+          { x: 396, y: 236, w: 284, h: 476, r: 16 },
+          { x: 88, y: 728, w: 284, h: 476, r: 16 },
+          { x: 396, y: 728, w: 284, h: 476, r: 16 }
         ],
         split: [
-          { x: 96, y: 200, w: 340, h: 932, r: 18 },
-          { x: 456, y: 200, w: 216, h: 290, r: 16 },
-          { x: 456, y: 510, w: 216, h: 290, r: 16 },
-          { x: 456, y: 820, w: 216, h: 290, r: 16 }
+          { x: 88, y: 236, w: 278, h: 972, r: 16 },
+          { x: 382, y: 236, w: 298, h: 304, r: 16 },
+          { x: 382, y: 556, w: 298, h: 304, r: 16 },
+          { x: 382, y: 876, w: 298, h: 332, r: 16 }
         ]
       }
     }
@@ -1257,22 +1257,38 @@
     baseCtx.drawImage(image, 0, 0, width, height);
     overlayCtx.drawImage(image, 0, 0, width, height);
 
-    const baseData = baseCtx.getImageData(0, 0, width, height);
     const overlayData = overlayCtx.getImageData(0, 0, width, height);
-    const slotMask = collectThemeSlotMask(theme, baseData);
-    const fill = hexToRgb(theme.background);
 
-    for (let index = 0; index < slotMask.length; index += 1) {
-      if (!slotMask[index]) continue;
-      const offset = index * 4;
-      baseData.data[offset] = fill.r;
-      baseData.data[offset + 1] = fill.g;
-      baseData.data[offset + 2] = fill.b;
-      baseData.data[offset + 3] = 255;
-      overlayData.data[offset + 3] = 0;
+    if (theme.frameOnly) {
+      // Frame-only templates have no white slots — make background-colored pixels transparent
+      // in overlay so only characters/decorations remain and appear on top of photos
+      const fill = hexToRgb(theme.background);
+      for (let i = 0; i < overlayData.data.length; i += 4) {
+        const dist = Math.abs(overlayData.data[i] - fill.r)
+          + Math.abs(overlayData.data[i + 1] - fill.g)
+          + Math.abs(overlayData.data[i + 2] - fill.b);
+        if (dist < 38) {
+          overlayData.data[i + 3] = 0;
+        }
+      }
+    } else {
+      const baseData = baseCtx.getImageData(0, 0, width, height);
+      const slotMask = collectThemeSlotMask(theme, baseData);
+      const fill = hexToRgb(theme.background);
+
+      for (let index = 0; index < slotMask.length; index += 1) {
+        if (!slotMask[index]) continue;
+        const offset = index * 4;
+        baseData.data[offset] = fill.r;
+        baseData.data[offset + 1] = fill.g;
+        baseData.data[offset + 2] = fill.b;
+        baseData.data[offset + 3] = 255;
+        overlayData.data[offset + 3] = 0;
+      }
+
+      baseCtx.putImageData(baseData, 0, 0);
     }
 
-    baseCtx.putImageData(baseData, 0, 0);
     overlayCtx.putImageData(overlayData, 0, 0);
     imageThemeCanvases[themeName] = { base, overlay };
     return imageThemeCanvases[themeName];
@@ -1408,7 +1424,11 @@
       drawPhotoInRect(previewCtx, shot, rect, theme);
     });
 
-    if (theme.frameOnly || currentLayout !== "classic") {
+    if (theme.frameOnly) {
+      // Overlay already has background pixels transparent — draw directly so edge
+      // characters that overlap photo areas still appear on top of photos
+      previewCtx.drawImage(canvases.overlay, 0, 0, layout.width, layout.height);
+    } else if (currentLayout !== "classic") {
       drawOverlayOutsideRects(previewCtx, canvases.overlay, layout.rects, layout.width, layout.height);
     } else {
       previewCtx.drawImage(canvases.overlay, 0, 0, layout.width, layout.height);
