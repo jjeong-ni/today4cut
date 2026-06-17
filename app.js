@@ -1374,7 +1374,13 @@
       drawPhotoInRect(previewCtx, shot, rect, theme);
     });
 
-    previewCtx.drawImage(canvases.overlay, 0, 0, layout.width, layout.height);
+    if (currentLayout === "classic") {
+      // Classic: slot mask aligns with photo positions → draw overlay directly to preserve edge characters
+      previewCtx.drawImage(canvases.overlay, 0, 0, layout.width, layout.height);
+    } else {
+      // Grid/Split: slot mask doesn't align with photo positions → clear actual photo rects from overlay
+      drawOverlayOutsideRects(previewCtx, canvases.overlay, layout.rects, layout.width, layout.height);
+    }
   }
 
   function drawStrip() {
