@@ -72,7 +72,7 @@
       height: 1377,
       src: "./assets/theme-kyunghee-kuong-1.png",
       background: "#a80d18",
-      photoArea: { x: 58, y: 238, w: 652, h: 930 },
+      photoArea: { x: 58, y: 704, w: 652, h: 492 },
       slots: [
         { x: 58, y: 187, w: 345, h: 490 },
         { x: 397, y: 187, w: 313, h: 234 },
@@ -81,7 +81,27 @@
         { x: 397, y: 704, w: 313, h: 233 },
         { x: 58, y: 961, w: 318, h: 235 },
         { x: 397, y: 961, w: 313, h: 235 }
-      ]
+      ],
+      customRects: {
+        classic: [
+          { x: 58, y: 704, w: 318, h: 233, r: 22 },
+          { x: 397, y: 704, w: 313, h: 233, r: 22 },
+          { x: 58, y: 961, w: 318, h: 235, r: 22 },
+          { x: 397, y: 961, w: 313, h: 235, r: 22 }
+        ],
+        grid: [
+          { x: 58, y: 704, w: 318, h: 233, r: 22 },
+          { x: 397, y: 704, w: 313, h: 233, r: 22 },
+          { x: 58, y: 961, w: 318, h: 235, r: 22 },
+          { x: 397, y: 961, w: 313, h: 235, r: 22 }
+        ],
+        split: [
+          { x: 58, y: 187, w: 345, h: 490, r: 24 },
+          { x: 397, y: 187, w: 313, h: 234, r: 22 },
+          { x: 397, y: 444, w: 313, h: 235, r: 22 },
+          { x: 397, y: 704, w: 313, h: 233, r: 22 }
+        ]
+      }
     },
     kuong2: {
       label: "쿠옹이 2",
@@ -90,13 +110,21 @@
       height: 1376,
       src: "./assets/theme-kuong-2.png",
       background: "#f8b7cc",
-      photoArea: { x: 58, y: 188, w: 652, h: 1004 },
+      photoArea: { x: 57, y: 188, w: 653, h: 1006 },
       slots: [
         { x: 57, y: 188, w: 653, h: 229 },
         { x: 57, y: 444, w: 653, h: 233 },
         { x: 57, y: 703, w: 653, h: 233 },
         { x: 57, y: 960, w: 653, h: 234 }
-      ]
+      ],
+      customRects: {
+        classic: [
+          { x: 57, y: 188, w: 653, h: 229, r: 22 },
+          { x: 57, y: 444, w: 653, h: 233, r: 22 },
+          { x: 57, y: 703, w: 653, h: 233, r: 22 },
+          { x: 57, y: 960, w: 653, h: 234, r: 22 }
+        ]
+      }
     }
   };
 
@@ -1109,6 +1137,11 @@
   }
 
   function getImageThemeLayout(theme) {
+    if (theme.customRects) {
+      const rects = theme.customRects[currentLayout] || theme.customRects.classic;
+      return { width: theme.width, height: theme.height, rects };
+    }
+
     const area = theme.photoArea;
 
     if (currentLayout === "grid") {
