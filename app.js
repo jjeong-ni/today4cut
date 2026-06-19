@@ -1452,7 +1452,12 @@
   }
 
   async function buildStrip() {
+    const layoutAtBuild = currentLayout;
     await ensureImageThemeReady();
+    if (currentLayout !== layoutAtBuild) {
+      currentLayout = layoutAtBuild;
+    }
+    console.log("[today4cut] buildStrip layout:", currentLayout, "theme:", currentTheme);
     drawStrip();
     stripBlob = await canvasToBlob(previewCanvas, "image/png");
     revokeStripUrl();
