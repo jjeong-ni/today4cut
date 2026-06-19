@@ -1259,19 +1259,7 @@
 
     const overlayData = overlayCtx.getImageData(0, 0, width, height);
 
-    if (theme.frameOnly) {
-      // Frame-only templates have no white slots — make background-colored pixels transparent
-      // in overlay so only characters/decorations remain and appear on top of photos
-      const fill = hexToRgb(theme.background);
-      for (let i = 0; i < overlayData.data.length; i += 4) {
-        const dist = Math.abs(overlayData.data[i] - fill.r)
-          + Math.abs(overlayData.data[i + 1] - fill.g)
-          + Math.abs(overlayData.data[i + 2] - fill.b);
-        if (dist < 38) {
-          overlayData.data[i + 3] = 0;
-        }
-      }
-    } else {
+    if (!theme.frameOnly) {
       const baseData = baseCtx.getImageData(0, 0, width, height);
       const slotMask = collectThemeSlotMask(theme, baseData);
       const fill = hexToRgb(theme.background);
@@ -1424,15 +1412,7 @@
       drawPhotoInRect(previewCtx, shot, rect, theme);
     });
 
-    if (theme.frameOnly) {
-      // Overlay already has background pixels transparent — draw directly so edge
-      // characters that overlap photo areas still appear on top of photos
-      previewCtx.drawImage(canvases.overlay, 0, 0, layout.width, layout.height);
-    } else if (currentLayout !== "classic") {
-      drawOverlayOutsideRects(previewCtx, canvases.overlay, layout.rects, layout.width, layout.height);
-    } else {
-      previewCtx.drawImage(canvases.overlay, 0, 0, layout.width, layout.height);
-    }
+    drawOverlayOutsideRects(previewCtx, canvases.overlay, layout.rects, layout.width, layout.height);
   }
 
   function drawStrip() {
