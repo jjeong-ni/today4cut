@@ -1274,37 +1274,38 @@
         if (!seedSet.has(key)) { seedSet.add(key); seeds.push({ x: sx, y: sy }); }
       });
       if (seeds.length > 0) {
-        const s0 = seeds[0];
-        const si0 = (s0.y * width + s0.x) * 4;
-        const fillR = overlayData.data[si0];
-        const fillG = overlayData.data[si0 + 1];
-        const fillB = overlayData.data[si0 + 2];
         const threshold = 40;
         const visited = new Uint8Array(width * height);
-        const queue = [];
+        // Each seed uses its OWN color as reference so color variations between areas don't block fill
         seeds.forEach(({ x, y }) => {
-          const idx = y * width + x;
-          if (!visited[idx]) { visited[idx] = 1; queue.push(idx); }
+          const startIdx = y * width + x;
+          if (visited[startIdx]) return;
+          const si = startIdx * 4;
+          const fillR = overlayData.data[si];
+          const fillG = overlayData.data[si + 1];
+          const fillB = overlayData.data[si + 2];
+          const queue = [startIdx];
+          visited[startIdx] = 1;
+          let head = 0;
+          while (head < queue.length) {
+            const idx = queue[head++];
+            overlayData.data[idx * 4 + 3] = 0;
+            const px = idx % width;
+            const py = (idx / width) | 0;
+            if (px > 0) {
+              const ni = idx - 1; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
+            }
+            if (px < width - 1) {
+              const ni = idx + 1; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
+            }
+            if (py > 0) {
+              const ni = idx - width; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
+            }
+            if (py < height - 1) {
+              const ni = idx + width; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
+            }
+          }
         });
-        let head = 0;
-        while (head < queue.length) {
-          const idx = queue[head++];
-          overlayData.data[idx * 4 + 3] = 0;
-          const px = idx % width;
-          const py = (idx / width) | 0;
-          if (px > 0) {
-            const ni = idx - 1; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
-          }
-          if (px < width - 1) {
-            const ni = idx + 1; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
-          }
-          if (py > 0) {
-            const ni = idx - width; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
-          }
-          if (py < height - 1) {
-            const ni = idx + width; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
-          }
-        }
       }
     } else {
       const baseData = baseCtx.getImageData(0, 0, width, height);
