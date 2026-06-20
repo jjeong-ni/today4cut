@@ -1260,22 +1260,46 @@
     const overlayData = overlayCtx.getImageData(0, 0, width, height);
 
     if (theme.frameOnly) {
-      // Sample background from center of first photo rect — guaranteed to be interior background
-      const rect0 = theme.customRects && theme.customRects.classic && theme.customRects.classic[0];
-      const sx = rect0 ? Math.floor(rect0.x + rect0.w / 2) : Math.floor(width / 2);
-      const sy = rect0 ? Math.floor(rect0.y + rect0.h / 2) : Math.floor(height / 2);
-      const si = (sy * width + sx) * 4;
-      const fill = {
-        r: overlayData.data[si],
-        g: overlayData.data[si + 1],
-        b: overlayData.data[si + 2]
-      };
-      for (let i = 0; i < overlayData.data.length; i += 4) {
-        const dist = Math.abs(overlayData.data[i] - fill.r)
-          + Math.abs(overlayData.data[i + 1] - fill.g)
-          + Math.abs(overlayData.data[i + 2] - fill.b);
-        if (dist < 100) {
-          overlayData.data[i + 3] = 0;
+      // Flood-fill background starting from each photo rect center.
+      // Only pixels connected to known-background seeds are made transparent,
+      // so characters embedded in the frame are never erased.
+      const rects = (theme.customRects && theme.customRects.classic) || [];
+      const seeds = rects.map((r) => ({
+        x: Math.floor(r.x + r.w / 2),
+        y: Math.floor(r.y + r.h / 2)
+      }));
+      if (seeds.length > 0) {
+        const s0 = seeds[0];
+        const si0 = (s0.y * width + s0.x) * 4;
+        const fillR = overlayData.data[si0];
+        const fillG = overlayData.data[si0 + 1];
+        const fillB = overlayData.data[si0 + 2];
+        const threshold = 40;
+        const visited = new Uint8Array(width * height);
+        const queue = [];
+        seeds.forEach(({ x, y }) => {
+          const idx = y * width + x;
+          if (!visited[idx]) { visited[idx] = 1; queue.push(idx); }
+        });
+        let head = 0;
+        while (head < queue.length) {
+          const idx = queue[head++];
+          overlayData.data[idx * 4 + 3] = 0;
+          const px = idx % width;
+          const py = (idx / width) | 0;
+          const neighbors = [px - 1 + py * width, px + 1 + py * width,
+                             px + (py - 1) * width, px + (py + 1) * width];
+          for (let n = 0; n < 4; n++) {
+            const ni = neighbors[n];
+            const nx = ni % width;
+            const ny = (ni / width) | 0;
+            if (nx < 0 || nx >= width || ny < 0 || ny >= height || visited[ni]) continue;
+            const o = ni * 4;
+            const dist = Math.abs(overlayData.data[o] - fillR)
+              + Math.abs(overlayData.data[o + 1] - fillG)
+              + Math.abs(overlayData.data[o + 2] - fillB);
+            if (dist < threshold) { visited[ni] = 1; queue.push(ni); }
+          }
         }
       }
     } else {
