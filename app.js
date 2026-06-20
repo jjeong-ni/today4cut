@@ -1109,7 +1109,25 @@
     ctx.drawImage(image, drawX, drawY, drawW, drawH);
   }
 
+  function rotateCW90(image) {
+    const tmp = document.createElement("canvas");
+    tmp.width = image.height;
+    tmp.height = image.width;
+    const tctx = tmp.getContext("2d");
+    tctx.translate(image.height, 0);
+    tctx.rotate(Math.PI / 2);
+    tctx.drawImage(image, 0, 0);
+    return tmp;
+  }
+
   function drawImageSmartFit(ctx, image, x, y, width, height) {
+    const targetIsLandscape = width > height;
+    const sourceIsLandscape = image.width > image.height;
+    // Auto-rotate: if rect and photo have opposite orientations, rotate 90° for a better fit
+    if (targetIsLandscape !== sourceIsLandscape) {
+      image = rotateCW90(image);
+    }
+
     const sourceRatio = image.width / image.height;
     const targetRatio = width / height;
     const ratioGap = Math.abs(Math.log(targetRatio / sourceRatio));
