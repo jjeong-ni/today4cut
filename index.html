@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260620d">
+  <link rel="stylesheet" href="./styles.css?v=20260620e">
 </head>
 <body>
   <main id="app" aria-live="polite">
@@ -217,7 +217,15 @@
 
         <div class="edit-section">
           <div class="edit-section-header">
-            <span class="edit-toggle-label">비네팅 강도</span>
+            <span class="edit-toggle-label">얼굴 슬림</span>
+            <span class="edit-value-label" id="faceSlimLabel">0%</span>
+          </div>
+          <input type="range" id="faceSlimSlider" class="edit-slider" min="0" max="100" value="0">
+        </div>
+
+        <div class="edit-section">
+          <div class="edit-section-header">
+            <span class="edit-toggle-label">비네팅 (어두운 테두리)</span>
             <span class="edit-value-label" id="vignetteLabel">0%</span>
           </div>
           <input type="range" id="vignetteSlider" class="edit-slider" min="0" max="100" value="0">
@@ -392,6 +400,6 @@
   </div>
 
   <canvas id="workCanvas" width="720" height="960" hidden></canvas>
-  <script src="./app.js?v=20260620d"></script>
+  <script src="./app.js?v=20260620e"></script>
 </body>
 </html>

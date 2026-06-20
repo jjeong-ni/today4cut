@@ -187,6 +187,8 @@
   const stampOptions = document.getElementById("stampOptions");
   const stampDate = document.getElementById("stampDate");
   const stampText = document.getElementById("stampText");
+  const faceSlimSlider = document.getElementById("faceSlimSlider");
+  const faceSlimLabel = document.getElementById("faceSlimLabel");
   const vignetteSlider = document.getElementById("vignetteSlider");
   const vignetteLabel = document.getElementById("vignetteLabel");
   const retakeBtn = document.getElementById("retakeBtn");
@@ -217,6 +219,7 @@
   let currentFilter = "normal";
   let shots = [];
   let editVignetteStrength = 0;
+  let editFaceSlimStrength = 0;
   let editStampEnabled = false;
   let editStampDateStr = "";
   let editStampCustomText = "";
@@ -1511,13 +1514,48 @@
     applyEditEffects();
   }
 
+  function applyPinchToRect(ctx, rx, ry, rw, rh, strength) {
+    const k = strength * 0.28;
+    const src = ctx.getImageData(rx, ry, rw, rh);
+    const dst = ctx.createImageData(rw, rh);
+    const cx = rw / 2, cy = rh / 2;
+    for (let y = 0; y < rh; y++) {
+      for (let x = 0; x < rw; x++) {
+        const nx = (x - cx) / cx;
+        const ny = (y - cy) / cy;
+        const r2 = nx * nx + ny * ny;
+        // Horizontal pinch: compress x toward center, y unchanged
+        const factor = 1 - k * Math.exp(-r2 * 1.8);
+        const sx = Math.round(cx + nx * factor * cx);
+        const sy = Math.round(cy + ny * cy);
+        if (sx >= 0 && sx < rw && sy >= 0 && sy < rh) {
+          const si = (sy * rw + sx) * 4;
+          const di = (y * rw + x) * 4;
+          dst.data[di]     = src.data[si];
+          dst.data[di + 1] = src.data[si + 1];
+          dst.data[di + 2] = src.data[si + 2];
+          dst.data[di + 3] = src.data[si + 3];
+        }
+      }
+    }
+    ctx.putImageData(dst, rx, ry);
+  }
+
   function applyEditEffects() {
+    const theme = themePresets[currentTheme];
+    const layout = theme?.type === "image"
+      ? getImageThemeLayout(theme)
+      : getOutputLayout();
+
+    // Face slim (horizontal pinch distortion per photo rect)
+    if (editFaceSlimStrength > 0) {
+      layout.rects.forEach((rect) => {
+        applyPinchToRect(previewCtx, rect.x, rect.y, rect.w, rect.h, editFaceSlimStrength);
+      });
+    }
+
     // Vignette on each photo rect
     if (editVignetteStrength > 0) {
-      const theme = themePresets[currentTheme];
-      const layout = theme?.type === "image"
-        ? getImageThemeLayout(theme)
-        : getOutputLayout();
       layout.rects.forEach((rect) => {
         drawVignette(previewCtx, rect.x, rect.y, rect.w, rect.h, editVignetteStrength);
       });
@@ -1529,10 +1567,6 @@
         ? editStampDateStr.replace(/-/g, ".") : "";
       const line2 = editStampCustomText.trim();
       const text = [line1, line2].filter(Boolean).join("  ");
-      const theme = themePresets[currentTheme];
-      const layout = theme?.type === "image"
-        ? getImageThemeLayout(theme)
-        : getOutputLayout();
       const fontSize = Math.round(Math.min(layout.width, layout.height) * 0.028);
       previewCtx.save();
       previewCtx.font = `700 ${fontSize}px 'Noto Sans KR', sans-serif`;
@@ -1561,9 +1595,12 @@
   function showEditScreen() {
     // Init edit controls to defaults
     editVignetteStrength = 0;
+    editFaceSlimStrength = 0;
     editStampEnabled = false;
     stampToggle.checked = false;
     stampOptions.classList.remove("is-open");
+    faceSlimSlider.value = 0;
+    faceSlimLabel.textContent = "0%";
     vignetteSlider.value = 0;
     vignetteLabel.textContent = "0%";
     // Default date = today
@@ -1744,6 +1781,11 @@
     editStampCustomText = stampText.value;
     if (editStampEnabled) refreshEditPreview();
   });
+  faceSlimSlider.addEventListener("input", () => {
+    editFaceSlimStrength = faceSlimSlider.value / 100;
+    faceSlimLabel.textContent = `${faceSlimSlider.value}%`;
+    refreshEditPreview();
+  });
   vignetteSlider.addEventListener("input", () => {
     editVignetteStrength = vignetteSlider.value / 100;
     vignetteLabel.textContent = `${vignetteSlider.value}%`;
@@ -1751,6 +1793,7 @@
   });
   editSkipBtn.addEventListener("click", () => {
     editVignetteStrength = 0;
+    editFaceSlimStrength = 0;
     editStampEnabled = false;
     drawStrip();
     stripBlob = null;

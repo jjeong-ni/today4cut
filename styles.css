@@ -165,6 +165,12 @@ p {
     linear-gradient(180deg, #fff8ea 0%, #eef3fb 50%, #f7edf1 100%);
 }
 
+.screen-edit .strip-stage {
+  flex: 0 0 auto;
+  height: 38vh;
+  min-height: 160px;
+}
+
 #editCanvas {
   display: block;
   width: auto;
@@ -178,10 +184,12 @@ p {
 .edit-controls {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 0 20px;
+  gap: 10px;
+  padding: 0 20px 4px;
   width: 100%;
   box-sizing: border-box;
+  overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .edit-section {
