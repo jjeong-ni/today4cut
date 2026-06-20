@@ -159,9 +159,111 @@ p {
 }
 
 .screen-preview,
+.screen-edit,
 .screen-save {
   background:
     linear-gradient(180deg, #fff8ea 0%, #eef3fb 50%, #f7edf1 100%);
+}
+
+#editCanvas {
+  display: block;
+  width: auto;
+  max-width: 82%;
+  height: 100%;
+  max-height: 100%;
+  border-radius: 12px;
+  box-shadow: var(--soft-shadow);
+}
+
+.edit-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.edit-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.edit-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.edit-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--khu-burgundy);
+  cursor: pointer;
+}
+
+.edit-toggle-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--khu-navy);
+}
+
+.edit-value-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--khu-burgundy);
+  min-width: 36px;
+  text-align: right;
+}
+
+.edit-stamp-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.25s ease;
+}
+
+.edit-stamp-options.is-open {
+  max-height: 120px;
+}
+
+.edit-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 13px;
+  border: 1.5px solid var(--khu-line);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--khu-navy);
+  background: var(--white);
+  outline: none;
+}
+
+.edit-input:focus {
+  border-color: var(--khu-burgundy);
+}
+
+.edit-slider {
+  width: 100%;
+  accent-color: var(--khu-burgundy);
+  height: 4px;
+  cursor: pointer;
+}
+
+.edit-actions {
+  padding: 0 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .screen-print {

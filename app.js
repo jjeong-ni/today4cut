@@ -179,6 +179,16 @@
   const themeStartBtn = document.getElementById("themeStartBtn");
   const shutterBtn = document.getElementById("shutterBtn");
   const cameraHomeBtn = document.getElementById("cameraHomeBtn");
+  const editCanvas = document.getElementById("editCanvas");
+  const editCtx = editCanvas.getContext("2d");
+  const editSkipBtn = document.getElementById("editSkipBtn");
+  const editApplyBtn = document.getElementById("editApplyBtn");
+  const stampToggle = document.getElementById("stampToggle");
+  const stampOptions = document.getElementById("stampOptions");
+  const stampDate = document.getElementById("stampDate");
+  const stampText = document.getElementById("stampText");
+  const vignetteSlider = document.getElementById("vignetteSlider");
+  const vignetteLabel = document.getElementById("vignetteLabel");
   const retakeBtn = document.getElementById("retakeBtn");
   const retakeIconBtn = document.getElementById("retakeIconBtn");
   const confirmBtn = document.getElementById("confirmBtn");
@@ -206,6 +216,10 @@
   let stream = null;
   let currentFilter = "normal";
   let shots = [];
+  let editVignetteStrength = 0;
+  let editStampEnabled = false;
+  let editStampDateStr = "";
+  let editStampCustomText = "";
   let stripBlob = null;
   let stripUrl = "";
   let isShooting = false;
@@ -999,7 +1013,9 @@
     return capture;
   }
 
-  function drawVignette(ctx, x, y, width, height) {
+  function drawVignette(ctx, x, y, width, height, strength) {
+    const alpha = strength !== undefined ? strength : 0.42;
+    if (alpha <= 0) return;
     const gradient = ctx.createRadialGradient(
       x + width / 2,
       y + height / 2,
@@ -1009,7 +1025,7 @@
       Math.max(width, height) * 0.72
     );
     gradient.addColorStop(0, "rgba(0, 0, 0, 0)");
-    gradient.addColorStop(1, "rgba(0, 0, 0, 0.42)");
+    gradient.addColorStop(1, `rgba(0, 0, 0, ${alpha})`);
     ctx.fillStyle = gradient;
     ctx.fillRect(x, y, width, height);
   }
@@ -1489,10 +1505,79 @@
     const theme = themePresets[currentTheme];
     if (theme?.type === "image") {
       drawImageThemeStrip();
-      return;
+    } else {
+      drawSolidStrip();
+    }
+    applyEditEffects();
+  }
+
+  function applyEditEffects() {
+    // Vignette on each photo rect
+    if (editVignetteStrength > 0) {
+      const theme = themePresets[currentTheme];
+      const layout = theme?.type === "image"
+        ? getImageThemeLayout(theme)
+        : getOutputLayout();
+      layout.rects.forEach((rect) => {
+        drawVignette(previewCtx, rect.x, rect.y, rect.w, rect.h, editVignetteStrength);
+      });
     }
 
-    drawSolidStrip();
+    // Stamp
+    if (editStampEnabled && (editStampDateStr || editStampCustomText)) {
+      const line1 = editStampDateStr
+        ? editStampDateStr.replace(/-/g, ".") : "";
+      const line2 = editStampCustomText.trim();
+      const text = [line1, line2].filter(Boolean).join("  ");
+      const theme = themePresets[currentTheme];
+      const layout = theme?.type === "image"
+        ? getImageThemeLayout(theme)
+        : getOutputLayout();
+      const fontSize = Math.round(Math.min(layout.width, layout.height) * 0.028);
+      previewCtx.save();
+      previewCtx.font = `700 ${fontSize}px 'Noto Sans KR', sans-serif`;
+      previewCtx.textAlign = "right";
+      previewCtx.textBaseline = "bottom";
+      layout.rects.forEach((rect) => {
+        const px = rect.x + rect.w - 10;
+        const py = rect.y + rect.h - 10;
+        previewCtx.shadowColor = "rgba(0,0,0,0.55)";
+        previewCtx.shadowBlur = 4;
+        previewCtx.fillStyle = "rgba(255,255,255,0.88)";
+        previewCtx.fillText(text, px, py);
+      });
+      previewCtx.restore();
+    }
+  }
+
+  function refreshEditPreview() {
+    drawStrip();
+    editCtx.clearRect(0, 0, editCanvas.width, editCanvas.height);
+    editCanvas.width = previewCanvas.width;
+    editCanvas.height = previewCanvas.height;
+    editCtx.drawImage(previewCanvas, 0, 0);
+  }
+
+  function showEditScreen() {
+    // Init edit controls to defaults
+    editVignetteStrength = 0;
+    editStampEnabled = false;
+    stampToggle.checked = false;
+    stampOptions.classList.remove("is-open");
+    vignetteSlider.value = 0;
+    vignetteLabel.textContent = "0%";
+    // Default date = today
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    stampDate.value = `${yyyy}-${mm}-${dd}`;
+    editStampDateStr = stampDate.value;
+    stampText.value = "";
+    editStampCustomText = "";
+
+    refreshEditPreview();
+    setScreen("edit");
   }
 
   function canvasToBlob(canvas, type, quality) {
@@ -1548,7 +1633,7 @@
     isShooting = false;
     setBusy(false);
     cameraMessage.textContent = "촬영 완료!";
-    setScreen("preview");
+    showEditScreen();
   }
 
   async function showPrintScreen() {
@@ -1646,6 +1731,57 @@
   themeStartBtn.addEventListener("click", startCamera);
   shutterBtn.addEventListener("click", shootSequence);
   cameraHomeBtn.addEventListener("click", goHome);
+  stampToggle.addEventListener("change", () => {
+    editStampEnabled = stampToggle.checked;
+    stampOptions.classList.toggle("is-open", editStampEnabled);
+    refreshEditPreview();
+  });
+  stampDate.addEventListener("change", () => {
+    editStampDateStr = stampDate.value;
+    if (editStampEnabled) refreshEditPreview();
+  });
+  stampText.addEventListener("input", () => {
+    editStampCustomText = stampText.value;
+    if (editStampEnabled) refreshEditPreview();
+  });
+  vignetteSlider.addEventListener("input", () => {
+    editVignetteStrength = vignetteSlider.value / 100;
+    vignetteLabel.textContent = `${vignetteSlider.value}%`;
+    refreshEditPreview();
+  });
+  editSkipBtn.addEventListener("click", () => {
+    editVignetteStrength = 0;
+    editStampEnabled = false;
+    drawStrip();
+    stripBlob = null;
+    canvasToBlob(previewCanvas, "image/png").then((blob) => {
+      stripBlob = blob;
+      revokeStripUrl();
+      stripUrl = URL.createObjectURL(blob);
+      printImage.src = stripUrl;
+      finalImage.src = stripUrl;
+      confirmBtn.disabled = false;
+      updateAuthUi();
+    });
+    setScreen("preview");
+  });
+  editApplyBtn.addEventListener("click", () => {
+    refreshEditPreview();
+    // Bake edit preview into the previewCanvas for final output
+    previewCanvas.width = editCanvas.width;
+    previewCanvas.height = editCanvas.height;
+    previewCtx.drawImage(editCanvas, 0, 0);
+    canvasToBlob(previewCanvas, "image/png").then((blob) => {
+      stripBlob = blob;
+      revokeStripUrl();
+      stripUrl = URL.createObjectURL(blob);
+      printImage.src = stripUrl;
+      finalImage.src = stripUrl;
+      confirmBtn.disabled = false;
+      updateAuthUi();
+    });
+    setScreen("preview");
+  });
   retakeBtn.addEventListener("click", startCamera);
   retakeIconBtn.addEventListener("click", startCamera);
   confirmBtn.addEventListener("click", showPrintScreen);

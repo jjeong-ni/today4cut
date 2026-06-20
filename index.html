@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@700&family=Jua&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css?v=20260620c">
+  <link rel="stylesheet" href="./styles.css?v=20260620d">
 </head>
 <body>
   <main id="app" aria-live="polite">
@@ -190,6 +190,46 @@
       <p id="cameraMessage" class="message" role="status"></p>
     </section>
 
+    <section class="screen screen-edit" data-screen="edit" aria-labelledby="edit-title">
+      <header class="topbar">
+        <span class="topbar-spacer"></span>
+        <h2 id="edit-title">편집</h2>
+        <span class="topbar-spacer"></span>
+      </header>
+
+      <div class="strip-stage">
+        <canvas id="editCanvas" aria-label="편집 중인 4컷 사진 미리보기"></canvas>
+      </div>
+
+      <div class="edit-controls">
+        <div class="edit-section">
+          <div class="edit-section-header">
+            <label class="edit-toggle">
+              <input type="checkbox" id="stampToggle">
+              <span class="edit-toggle-label">날짜 / 텍스트 스탬프</span>
+            </label>
+          </div>
+          <div class="edit-stamp-options" id="stampOptions">
+            <input type="date" id="stampDate" class="edit-input">
+            <input type="text" id="stampText" class="edit-input" placeholder="추가 텍스트 (선택)" maxlength="30">
+          </div>
+        </div>
+
+        <div class="edit-section">
+          <div class="edit-section-header">
+            <span class="edit-toggle-label">비네팅 강도</span>
+            <span class="edit-value-label" id="vignetteLabel">0%</span>
+          </div>
+          <input type="range" id="vignetteSlider" class="edit-slider" min="0" max="100" value="0">
+        </div>
+      </div>
+
+      <div class="action-row edit-actions">
+        <button id="editSkipBtn" class="secondary-button" type="button">스킵</button>
+        <button id="editApplyBtn" class="primary-button compact" type="button">적용</button>
+      </div>
+    </section>
+
     <section class="screen screen-preview" data-screen="preview" aria-labelledby="preview-title">
       <header class="topbar">
         <button id="retakeIconBtn" class="icon-button" type="button" aria-label="다시 찍기">
@@ -352,6 +392,6 @@
   </div>
 
   <canvas id="workCanvas" width="720" height="960" hidden></canvas>
-  <script src="./app.js?v=20260620c"></script>
+  <script src="./app.js?v=20260620d"></script>
 </body>
 </html>
