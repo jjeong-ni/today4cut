@@ -201,40 +201,42 @@
         <canvas id="editCanvas" aria-label="편집 중인 4컷 사진 미리보기"></canvas>
       </div>
 
-      <div class="edit-controls">
-        <div class="edit-section">
-          <div class="edit-section-header">
-            <label class="edit-toggle">
-              <input type="checkbox" id="stampToggle">
-              <span class="edit-toggle-label">날짜 / 텍스트 스탬프</span>
-            </label>
+      <div class="edit-bottom-panel">
+        <div class="edit-controls">
+          <div class="edit-section">
+            <div class="edit-section-header">
+              <label class="edit-toggle">
+                <input type="checkbox" id="stampToggle">
+                <span class="edit-toggle-label">날짜 / 텍스트 스탬프</span>
+              </label>
+            </div>
+            <div class="edit-stamp-options" id="stampOptions">
+              <input type="date" id="stampDate" class="edit-input">
+              <input type="text" id="stampText" class="edit-input" placeholder="추가 텍스트 (선택)" maxlength="30">
+            </div>
           </div>
-          <div class="edit-stamp-options" id="stampOptions">
-            <input type="date" id="stampDate" class="edit-input">
-            <input type="text" id="stampText" class="edit-input" placeholder="추가 텍스트 (선택)" maxlength="30">
+
+          <div class="edit-section">
+            <div class="edit-section-header">
+              <span class="edit-toggle-label">얼굴 슬림</span>
+              <span class="edit-value-label" id="faceSlimLabel">0%</span>
+            </div>
+            <input type="range" id="faceSlimSlider" class="edit-slider" min="0" max="100" value="0">
+          </div>
+
+          <div class="edit-section">
+            <div class="edit-section-header">
+              <span class="edit-toggle-label">비네팅 (어두운 테두리)</span>
+              <span class="edit-value-label" id="vignetteLabel">0%</span>
+            </div>
+            <input type="range" id="vignetteSlider" class="edit-slider" min="0" max="100" value="0">
           </div>
         </div>
 
-        <div class="edit-section">
-          <div class="edit-section-header">
-            <span class="edit-toggle-label">얼굴 슬림</span>
-            <span class="edit-value-label" id="faceSlimLabel">0%</span>
-          </div>
-          <input type="range" id="faceSlimSlider" class="edit-slider" min="0" max="100" value="0">
+        <div class="action-row edit-actions">
+          <button id="editSkipBtn" class="secondary-button" type="button">스킵</button>
+          <button id="editApplyBtn" class="primary-button compact" type="button">적용</button>
         </div>
-
-        <div class="edit-section">
-          <div class="edit-section-header">
-            <span class="edit-toggle-label">비네팅 (어두운 테두리)</span>
-            <span class="edit-value-label" id="vignetteLabel">0%</span>
-          </div>
-          <input type="range" id="vignetteSlider" class="edit-slider" min="0" max="100" value="0">
-        </div>
-      </div>
-
-      <div class="action-row edit-actions">
-        <button id="editSkipBtn" class="secondary-button" type="button">스킵</button>
-        <button id="editApplyBtn" class="primary-button compact" type="button">적용</button>
       </div>
     </section>
 
@@ -401,6 +403,6 @@
 
   <canvas id="workCanvas" width="720" height="960" hidden></canvas>
   <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <script src="./app.js?v=20260620f"></script>
+  <script src="./app.js?v=20260620g"></script>
 </body>
 </html>
