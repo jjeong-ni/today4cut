@@ -1511,11 +1511,24 @@
     } else {
       drawSolidStrip();
     }
-    applyEditEffects();
+  }
+
+  // ── Face-api.js helpers ──────────────────────────────────────────────────
+  let faceApiReady = false;
+  let faceApiLoading = null;
+
+  function initFaceApi() {
+    if (faceApiReady) return Promise.resolve();
+    if (faceApiLoading) return faceApiLoading;
+    faceApiLoading = faceapi.nets.tinyFaceDetector
+      .loadFromUri("https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/weights")
+      .then(() => { faceApiReady = true; });
+    return faceApiLoading;
   }
 
   function applyPinchToRect(ctx, rx, ry, rw, rh, strength) {
-    const k = strength * 0.28;
+    if (rw <= 0 || rh <= 0) return;
+    const k = strength * 0.32;
     const src = ctx.getImageData(rx, ry, rw, rh);
     const dst = ctx.createImageData(rw, rh);
     const cx = rw / 2, cy = rh / 2;
@@ -1524,8 +1537,7 @@
         const nx = (x - cx) / cx;
         const ny = (y - cy) / cy;
         const r2 = nx * nx + ny * ny;
-        // Horizontal pinch: compress x toward center, y unchanged
-        const factor = 1 - k * Math.exp(-r2 * 1.8);
+        const factor = 1 - k * Math.exp(-r2 * 1.6);
         const sx = Math.round(cx + nx * factor * cx);
         const sy = Math.round(cy + ny * cy);
         if (sx >= 0 && sx < rw && sy >= 0 && sy < rh) {
@@ -1541,30 +1553,40 @@
     ctx.putImageData(dst, rx, ry);
   }
 
-  function applyEditEffects() {
-    const theme = themePresets[currentTheme];
-    const layout = theme?.type === "image"
-      ? getImageThemeLayout(theme)
-      : getOutputLayout();
-
-    // Face slim (horizontal pinch distortion per photo rect)
-    if (editFaceSlimStrength > 0) {
-      layout.rects.forEach((rect) => {
-        applyPinchToRect(previewCtx, rect.x, rect.y, rect.w, rect.h, editFaceSlimStrength);
-      });
+  async function applyFaceSlim(layout, strength) {
+    await initFaceApi();
+    const opts = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 });
+    for (const rect of layout.rects) {
+      // Extract the rendered rect pixels to a temp canvas for detection
+      const tmp = document.createElement("canvas");
+      tmp.width = rect.w;
+      tmp.height = rect.h;
+      tmp.getContext("2d").putImageData(
+        previewCtx.getImageData(rect.x, rect.y, rect.w, rect.h), 0, 0
+      );
+      const detections = await faceapi.detectAllFaces(tmp, opts);
+      for (const det of detections) {
+        const { x, y, width, height } = det.box;
+        // Expand region so hairline and chin are included
+        const mx = Math.round(width * 0.3);
+        const my = Math.round(height * 0.2);
+        const fx = Math.max(0, Math.round(x) - mx);
+        const fy = Math.max(0, Math.round(y) - my);
+        const fw = Math.min(rect.w - fx, Math.round(width) + mx * 2);
+        const fh = Math.min(rect.h - fy, Math.round(height) + my * 2);
+        applyPinchToRect(previewCtx, rect.x + fx, rect.y + fy, fw, fh, strength);
+      }
     }
+  }
 
-    // Vignette on each photo rect
+  function applyStampAndVignette(layout) {
     if (editVignetteStrength > 0) {
       layout.rects.forEach((rect) => {
         drawVignette(previewCtx, rect.x, rect.y, rect.w, rect.h, editVignetteStrength);
       });
     }
-
-    // Stamp
     if (editStampEnabled && (editStampDateStr || editStampCustomText)) {
-      const line1 = editStampDateStr
-        ? editStampDateStr.replace(/-/g, ".") : "";
+      const line1 = editStampDateStr ? editStampDateStr.replace(/-/g, ".") : "";
       const line2 = editStampCustomText.trim();
       const text = [line1, line2].filter(Boolean).join("  ");
       const fontSize = Math.round(Math.min(layout.width, layout.height) * 0.028);
@@ -1573,20 +1595,29 @@
       previewCtx.textAlign = "right";
       previewCtx.textBaseline = "bottom";
       layout.rects.forEach((rect) => {
-        const px = rect.x + rect.w - 10;
-        const py = rect.y + rect.h - 10;
         previewCtx.shadowColor = "rgba(0,0,0,0.55)";
         previewCtx.shadowBlur = 4;
         previewCtx.fillStyle = "rgba(255,255,255,0.88)";
-        previewCtx.fillText(text, px, py);
+        previewCtx.fillText(text, rect.x + rect.w - 10, rect.y + rect.h - 10);
       });
       previewCtx.restore();
     }
   }
 
-  function refreshEditPreview() {
+  async function refreshEditPreview() {
+    const theme = themePresets[currentTheme];
+    const layout = theme?.type === "image"
+      ? getImageThemeLayout(theme)
+      : getOutputLayout();
+
     drawStrip();
-    editCtx.clearRect(0, 0, editCanvas.width, editCanvas.height);
+    if (editFaceSlimStrength > 0) {
+      faceSlimLabel.textContent = "인식 중…";
+      await applyFaceSlim(layout, editFaceSlimStrength);
+      faceSlimLabel.textContent = `${Math.round(editFaceSlimStrength * 100)}%`;
+    }
+    applyStampAndVignette(layout);
+
     editCanvas.width = previewCanvas.width;
     editCanvas.height = previewCanvas.height;
     editCtx.drawImage(previewCanvas, 0, 0);
@@ -1768,6 +1799,7 @@
   themeStartBtn.addEventListener("click", startCamera);
   shutterBtn.addEventListener("click", shootSequence);
   cameraHomeBtn.addEventListener("click", goHome);
+  let faceSlimDebounceTimer = null;
   stampToggle.addEventListener("change", () => {
     editStampEnabled = stampToggle.checked;
     stampOptions.classList.toggle("is-open", editStampEnabled);
@@ -1783,8 +1815,9 @@
   });
   faceSlimSlider.addEventListener("input", () => {
     editFaceSlimStrength = faceSlimSlider.value / 100;
-    faceSlimLabel.textContent = `${faceSlimSlider.value}%`;
-    refreshEditPreview();
+    faceSlimLabel.textContent = editFaceSlimStrength > 0 ? "인식 대기…" : "0%";
+    clearTimeout(faceSlimDebounceTimer);
+    faceSlimDebounceTimer = setTimeout(() => refreshEditPreview(), 400);
   });
   vignetteSlider.addEventListener("input", () => {
     editVignetteStrength = vignetteSlider.value / 100;
@@ -1796,7 +1829,6 @@
     editFaceSlimStrength = 0;
     editStampEnabled = false;
     drawStrip();
-    stripBlob = null;
     canvasToBlob(previewCanvas, "image/png").then((blob) => {
       stripBlob = blob;
       revokeStripUrl();
@@ -1808,21 +1840,21 @@
     });
     setScreen("preview");
   });
-  editApplyBtn.addEventListener("click", () => {
-    refreshEditPreview();
-    // Bake edit preview into the previewCanvas for final output
+  editApplyBtn.addEventListener("click", async () => {
+    editApplyBtn.disabled = true;
+    await refreshEditPreview();
     previewCanvas.width = editCanvas.width;
     previewCanvas.height = editCanvas.height;
     previewCtx.drawImage(editCanvas, 0, 0);
-    canvasToBlob(previewCanvas, "image/png").then((blob) => {
-      stripBlob = blob;
-      revokeStripUrl();
-      stripUrl = URL.createObjectURL(blob);
-      printImage.src = stripUrl;
-      finalImage.src = stripUrl;
-      confirmBtn.disabled = false;
-      updateAuthUi();
-    });
+    const blob = await canvasToBlob(previewCanvas, "image/png");
+    stripBlob = blob;
+    revokeStripUrl();
+    stripUrl = URL.createObjectURL(blob);
+    printImage.src = stripUrl;
+    finalImage.src = stripUrl;
+    confirmBtn.disabled = false;
+    updateAuthUi();
+    editApplyBtn.disabled = false;
     setScreen("preview");
   });
   retakeBtn.addEventListener("click", startCamera);
