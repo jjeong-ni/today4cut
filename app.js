@@ -1260,20 +1260,21 @@
     const overlayData = overlayCtx.getImageData(0, 0, width, height);
 
     if (theme.frameOnly) {
-      // Sample background color from the image center (always interior, not characters)
-      const cx = Math.floor(width / 2);
-      const cy = Math.floor(height / 2);
-      const ci = (cy * width + cx) * 4;
+      // Sample background from center of first photo rect — guaranteed to be interior background
+      const rect0 = theme.customRects && theme.customRects.classic && theme.customRects.classic[0];
+      const sx = rect0 ? Math.floor(rect0.x + rect0.w / 2) : Math.floor(width / 2);
+      const sy = rect0 ? Math.floor(rect0.y + rect0.h / 2) : Math.floor(height / 2);
+      const si = (sy * width + sx) * 4;
       const fill = {
-        r: overlayData.data[ci],
-        g: overlayData.data[ci + 1],
-        b: overlayData.data[ci + 2]
+        r: overlayData.data[si],
+        g: overlayData.data[si + 1],
+        b: overlayData.data[si + 2]
       };
       for (let i = 0; i < overlayData.data.length; i += 4) {
         const dist = Math.abs(overlayData.data[i] - fill.r)
           + Math.abs(overlayData.data[i + 1] - fill.g)
           + Math.abs(overlayData.data[i + 2] - fill.b);
-        if (dist < 80) {
+        if (dist < 100) {
           overlayData.data[i + 3] = 0;
         }
       }
