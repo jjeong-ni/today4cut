@@ -1263,11 +1263,16 @@
       // Flood-fill background starting from each photo rect center.
       // Only pixels connected to known-background seeds are made transparent,
       // so characters embedded in the frame are never erased.
-      const rects = (theme.customRects && theme.customRects.classic) || [];
-      const seeds = rects.map((r) => ({
-        x: Math.floor(r.x + r.w / 2),
-        y: Math.floor(r.y + r.h / 2)
-      }));
+      // Collect seeds from ALL layout rects so every photo area (classic/grid/split) gets reached
+      const allRects = Object.values(theme.customRects || {}).flat();
+      const seedSet = new Set();
+      const seeds = [];
+      allRects.forEach((r) => {
+        const sx = Math.floor(r.x + r.w / 2);
+        const sy = Math.floor(r.y + r.h / 2);
+        const key = sy * width + sx;
+        if (!seedSet.has(key)) { seedSet.add(key); seeds.push({ x: sx, y: sy }); }
+      });
       if (seeds.length > 0) {
         const s0 = seeds[0];
         const si0 = (s0.y * width + s0.x) * 4;
@@ -1287,18 +1292,17 @@
           overlayData.data[idx * 4 + 3] = 0;
           const px = idx % width;
           const py = (idx / width) | 0;
-          const neighbors = [px - 1 + py * width, px + 1 + py * width,
-                             px + (py - 1) * width, px + (py + 1) * width];
-          for (let n = 0; n < 4; n++) {
-            const ni = neighbors[n];
-            const nx = ni % width;
-            const ny = (ni / width) | 0;
-            if (nx < 0 || nx >= width || ny < 0 || ny >= height || visited[ni]) continue;
-            const o = ni * 4;
-            const dist = Math.abs(overlayData.data[o] - fillR)
-              + Math.abs(overlayData.data[o + 1] - fillG)
-              + Math.abs(overlayData.data[o + 2] - fillB);
-            if (dist < threshold) { visited[ni] = 1; queue.push(ni); }
+          if (px > 0) {
+            const ni = idx - 1; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
+          }
+          if (px < width - 1) {
+            const ni = idx + 1; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
+          }
+          if (py > 0) {
+            const ni = idx - width; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
+          }
+          if (py < height - 1) {
+            const ni = idx + width; if (!visited[ni]) { const o = ni*4; if (Math.abs(overlayData.data[o]-fillR)+Math.abs(overlayData.data[o+1]-fillG)+Math.abs(overlayData.data[o+2]-fillB) < threshold) { visited[ni]=1; queue.push(ni); } }
           }
         }
       }
