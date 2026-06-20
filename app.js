@@ -1259,7 +1259,25 @@
 
     const overlayData = overlayCtx.getImageData(0, 0, width, height);
 
-    if (!theme.frameOnly) {
+    if (theme.frameOnly) {
+      // Sample background color from the image center (always interior, not characters)
+      const cx = Math.floor(width / 2);
+      const cy = Math.floor(height / 2);
+      const ci = (cy * width + cx) * 4;
+      const fill = {
+        r: overlayData.data[ci],
+        g: overlayData.data[ci + 1],
+        b: overlayData.data[ci + 2]
+      };
+      for (let i = 0; i < overlayData.data.length; i += 4) {
+        const dist = Math.abs(overlayData.data[i] - fill.r)
+          + Math.abs(overlayData.data[i + 1] - fill.g)
+          + Math.abs(overlayData.data[i + 2] - fill.b);
+        if (dist < 80) {
+          overlayData.data[i + 3] = 0;
+        }
+      }
+    } else {
       const baseData = baseCtx.getImageData(0, 0, width, height);
       const slotMask = collectThemeSlotMask(theme, baseData);
       const fill = hexToRgb(theme.background);
@@ -1412,7 +1430,11 @@
       drawPhotoInRect(previewCtx, shot, rect, theme);
     });
 
-    drawOverlayOutsideRects(previewCtx, canvases.overlay, layout.rects, layout.width, layout.height);
+    if (theme.frameOnly) {
+      previewCtx.drawImage(canvases.overlay, 0, 0, layout.width, layout.height);
+    } else {
+      drawOverlayOutsideRects(previewCtx, canvases.overlay, layout.rects, layout.width, layout.height);
+    }
   }
 
   function drawStrip() {
